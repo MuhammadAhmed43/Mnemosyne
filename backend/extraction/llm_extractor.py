@@ -148,7 +148,7 @@ class LLMExtractor:
     def _mk(ntype: NodeType, content: str, conf: float, data: dict) -> ExtractionCandidate:
         return ExtractionCandidate(
             node_type=ntype,
-            content=str(content)[:500],
+            content=str(content)[:1200],
             structured_data=data,
             confidence=conf,
             source_pass="llm",

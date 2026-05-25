@@ -89,7 +89,7 @@ class IdeaExtractor:
         return [
             ExtractionCandidate(
                 node_type=NodeType.INSIGHT,
-                content=content[:600],
+                content=content[:1600],
                 structured_data={"kind": "idea", "topic": topic, "source": "idea_capture"},
                 confidence=IDEA_CONFIDENCE,
                 source_pass="idea",
@@ -108,7 +108,10 @@ class IdeaExtractor:
 
     @staticmethod
     def _gist(ai_msg: str) -> str:
+        # Keep a meaningful chunk of "the working" (not just the first line) so the
+        # idea is actually resumable later — capped so it stays a summary, not a
+        # full transcript. Strips a leading filler sentence ("Great question! …").
         text = _FILLER_OPENER.sub("", ai_msg.strip(), count=1).strip()
         sentences = re.split(r"(?<=[.!?])\s+", text)
-        gist = " ".join(sentences[:2]).strip()
-        return (gist or text)[:400]
+        gist = " ".join(sentences[:8]).strip()
+        return (gist or text)[:1400]
