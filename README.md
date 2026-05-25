@@ -9,6 +9,7 @@ It quietly learns what matters from your conversations, organizes it into a stru
 knowledge graph, and feeds the right context back into every new chat — so you stop
 re-explaining yourself, and your AI stops forgetting you.
 
+[![CI](https://github.com/MuhammadAhmed43/Mnemosyne/actions/workflows/ci.yml/badge.svg)](https://github.com/MuhammadAhmed43/Mnemosyne/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-7C3AED.svg)](LICENSE)
 [![Python 3.12+](https://img.shields.io/badge/python-3.12+-3776AB.svg?logo=python&logoColor=white)](https://www.python.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-3178C6.svg?logo=typescript&logoColor=white)](https://www.typescriptlang.org)
