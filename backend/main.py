@@ -55,7 +55,18 @@ async def lifespan(app: FastAPI):
     app.state.container = container
     app.state.queue = queue
     app.state.start_time = time.monotonic()
+    async def _broadcast() -> None:
+        """Fan every published event out to all connected WS subscribers."""
+        while True:
+            event = await container.events.get()
+            for q in list(container.subscribers):
+                try:
+                    q.put_nowait(event)
+                except asyncio.QueueFull:
+                    pass  # slow client — drop rather than block the bus
+
     app.state.workers = [
+        asyncio.create_task(_broadcast()),
         asyncio.create_task(extraction_worker(container, queue)),
         asyncio.create_task(decay_worker(container)),
         asyncio.create_task(consolidation_worker(container)),

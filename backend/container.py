@@ -56,7 +56,11 @@ class ServiceContainer:
         self.embedding = EmbeddingService(config)
         self.intent = IntentService()
         self.pipeline = ExtractionPipeline(config)
-        self.events: asyncio.Queue[dict] = asyncio.Queue()  # WS event bus
+        self.events: asyncio.Queue[dict] = asyncio.Queue()  # producers publish here
+        # Each connected WS client registers a queue here; a broadcaster task
+        # (started in the app lifespan) fans every event out to all of them, so
+        # the dashboard AND the chat tab can both receive live updates.
+        self.subscribers: set[asyncio.Queue[dict]] = set()
 
         # Global-scoped repos (global.db)
         gconn = self.db.get_global()

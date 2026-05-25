@@ -351,6 +351,20 @@ def test_context_renders_insight_and_note_sections():
     assert "Saved Notes" in body and "rotates every 90 days" in body
 
 
+def test_ws_events_rejects_bad_token(client):
+    import pytest
+    with pytest.raises(Exception):  # handshake closed with policy-violation
+        with client.websocket_connect("/ws/events?token=not-the-token") as ws:
+            ws.receive_json()
+
+
+def test_ws_events_accepts_valid_token(client):
+    token = client.get("/pair").json()["token"]
+    # A valid token completes the handshake; the connection registers a subscriber.
+    with client.websocket_connect(f"/ws/events?token={token}"):
+        assert len(client.app.state.container.subscribers) >= 1
+
+
 def test_node_counts_endpoint(client):
     token = client.get("/pair").json()["token"]
     h = {"Authorization": f"Bearer {token}"}

@@ -87,7 +87,9 @@ async def extraction_worker(container: ServiceContainer, queue: DiskBackedQueue)
             stats = await asyncio.to_thread(_commit_results, container, record, result)
             queue.mark_complete(record.id)
             await container.events.put({
-                "event": "extraction_completed", "workspace_id": record.workspace_id,
+                "event": "extraction_completed",
+                "workspace_id": record.workspace_id,
+                "workspace_name": ws.name if ws else "",
                 "nodes_committed": stats["committed"], "nodes_pending": stats["pending"],
             })
         except Exception as e:  # noqa: BLE001
