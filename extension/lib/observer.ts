@@ -121,9 +121,11 @@ async function onNewResponse(responseEl: Element, config: PlatformConfig): Promi
       const status = r?.status
       if (status === "queued" || status === "processing") {
         if (r?.workspace_created) {
-          showToast(`🧠 New workspace: ${r.workspace_name ?? "Untitled"}`, { sub: "This looked like a new topic — captured here" })
+          showToast(`🧠 New workspace: ${r.workspace_name ?? "Untitled"}`, { sub: "New topic detected — capturing here" })
         } else {
-          showToast("🧠 Saved this turn to memory")
+          // Honest wording: the turn is queued; extraction (which may yield 0, 1,
+          // or several memories) runs in the background a moment later.
+          showToast("🧠 Captured — extracting memories…")
         }
       } else if (status === "blocked") {
         showToast("Mnemosyne: skipped (sensitive data detected)", { sub: "Not stored" })
