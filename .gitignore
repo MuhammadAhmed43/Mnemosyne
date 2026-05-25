@@ -45,3 +45,6 @@ Thumbs.db
 # ─── Scratch / local artifacts ────────────────────────────
 Untitled.txt
 *.docx
+
+# ─── Tooling ──────────────────────────────────────────────
+.claude/

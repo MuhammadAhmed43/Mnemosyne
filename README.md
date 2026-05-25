@@ -199,7 +199,7 @@ auto-commit; vague entities are demoted so they don't flood the queue.
 ### 1 · Engine
 
 ```bash
-git clone https://github.com/MuhammadAhmed43/mnemosyne.git && cd mnemosyne
+git clone https://github.com/MuhammadAhmed43/Mnemosyne.git && cd Mnemosyne
 python -m venv .venv && . .venv/bin/activate     # Windows: .venv\Scripts\activate
 pip install -e .                                  # installs deps + the spaCy model
 mnemosyne-engine                                  # → http://localhost:7432
