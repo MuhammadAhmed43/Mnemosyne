@@ -37,6 +37,7 @@ async function pollHealth(): Promise<void> {
         chrome.action.setBadgeBackgroundColor({ color: "#7C3AED" })
         await tryPair(host)
         await flushBuffer()
+        void connectEvents()
         return
       }
     } catch {
@@ -46,6 +47,42 @@ async function pollHealth(): Promise<void> {
   engineOnline = false
   await chrome.storage.local.set({ engine_status: { status: "offline" } })
   chrome.action.setBadgeBackgroundColor({ color: "#6B7280" })
+}
+
+// ---- live event stream (content scripts can't open a WS to localhost because
+// the AI sites' CSP blocks it, so the background worker holds it and relays). ----
+let eventsWs: WebSocket | null = null
+
+async function connectEvents(): Promise<void> {
+  if (eventsWs && (eventsWs.readyState === WebSocket.OPEN || eventsWs.readyState === WebSocket.CONNECTING)) return
+  const token = await getToken()
+  if (!token) return
+  try {
+    const ws = new WebSocket(`${base.replace(/^http/, "ws")}/ws/events?token=${encodeURIComponent(token)}`)
+    eventsWs = ws
+    ws.onmessage = (e) => {
+      try {
+        const ev = JSON.parse(typeof e.data === "string" ? e.data : "{}")
+        if (ev.event !== "extraction_completed") return
+        const n = ev.nodes_committed || 0
+        const p = ev.nodes_pending || 0
+        if (n + p === 0) return
+        const where = ev.workspace_name ? ` to ${ev.workspace_name}` : ""
+        if (n > 0) {
+          toastActiveTab(`🧠 Saved ${n} ${n === 1 ? "memory" : "memories"}${where}`, p > 0 ? `${p} more awaiting review` : undefined)
+        } else {
+          toastActiveTab(`📥 ${p} item${p === 1 ? "" : "s"} to review${where}`)
+        }
+      } catch {
+        /* ignore malformed event */
+      }
+    }
+    const drop = () => { if (eventsWs === ws) eventsWs = null }
+    ws.onclose = drop
+    ws.onerror = () => { try { ws.close() } catch { /* noop */ } drop() }
+  } catch {
+    eventsWs = null
+  }
 }
 
 /** Single chokepoint deciding whether a capture is allowed. Honors the global
@@ -65,6 +102,7 @@ async function captureGate(): Promise<string | null> {
 }
 
 async function handleCapture(payload: CapturePayload): Promise<CaptureResult> {
+  void connectEvents() // ensure the event stream is live for the imminent extraction result
   // Global pause / incognito — don't capture anything when either is on.
   const skip = await captureGate()
   if (skip) {

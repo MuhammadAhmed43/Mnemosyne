@@ -24,6 +24,12 @@ export class MnemosyneAPI {
     this.token = token
   }
 
+  /** WebSocket URL for the live event stream (token in query — browsers can't set
+   *  WS auth headers). Derives ws(s):// from the probed http(s) base. */
+  eventsUrl(): string {
+    return `${this.base.replace(/^http/, "ws")}/ws/events?token=${encodeURIComponent(this.token)}`
+  }
+
   private headers(): HeadersInit {
     return { Authorization: `Bearer ${this.token}`, "Content-Type": "application/json" }
   }

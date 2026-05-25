@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 
 import { GraphTab } from "~components/GraphTab"
 import { WorkspaceSelector } from "~components/WorkspaceSelector"
@@ -8,6 +8,7 @@ import { Overview } from "~components/dashboard/Overview"
 import { SessionReplay } from "~components/dashboard/SessionReplay"
 import { SettingsPage } from "~components/dashboard/SettingsPage"
 import { useApi } from "~lib/useApi"
+import { showToast } from "~lib/toast"
 import type { Workspace } from "~lib/types"
 
 import "~style.css"
@@ -55,15 +56,52 @@ function Dashboard() {
   const [workspaces, setWorkspaces] = useState<Workspace[]>([])
   const [active, setActive] = useState<Workspace | null>(null)
   const [page, setPage] = useState<PageId>("overview")
+  const [refreshKey, setRefreshKey] = useState(0) // bumped on live events to reload data views
 
-  useEffect(() => {
-    if (api && online) {
-      api.listWorkspaces().then((r) => {
-        setWorkspaces(r.workspaces)
-        setActive(r.workspaces[0] ?? null)
-      })
-    }
+  const loadWorkspaces = useCallback(() => {
+    if (!api || !online) return
+    api.listWorkspaces().then((r) => {
+      setWorkspaces(r.workspaces)
+      // Keep the user on their current workspace; just refresh its data.
+      setActive((cur) => (cur ? r.workspaces.find((w) => w.id === cur.id) ?? cur : r.workspaces[0] ?? null))
+    })
   }, [api, online])
+
+  useEffect(loadWorkspaces, [loadWorkspaces])
+
+  // Live updates: when the engine finishes extracting a turn, refresh counts and
+  // the active view automatically, and toast what landed — no manual refresh,
+  // no guessing which workspace it went to.
+  useEffect(() => {
+    if (!api || !online) return
+    let ws: WebSocket | null = null
+    try {
+      ws = new WebSocket(api.eventsUrl())
+      ws.onmessage = (e) => {
+        try {
+          const ev = JSON.parse(e.data)
+          if (ev.event === "extraction_completed") {
+            loadWorkspaces()
+            setRefreshKey((k) => k + 1)
+            const n = ev.nodes_committed || 0
+            const p = ev.nodes_pending || 0
+            if (n > 0) showToast(`🧠 Saved ${n} ${n === 1 ? "memory" : "memories"}${ev.workspace_name ? ` to ${ev.workspace_name}` : ""}`, p > 0 ? { sub: `${p} awaiting review` } : {})
+            else if (p > 0) showToast(`📥 ${p} item${p === 1 ? "" : "s"} to review${ev.workspace_name ? ` in ${ev.workspace_name}` : ""}`)
+          } else if (ev.event === "decay_completed") {
+            loadWorkspaces()
+            setRefreshKey((k) => k + 1)
+          }
+        } catch {
+          /* ignore malformed event */
+        }
+      }
+    } catch {
+      /* engine may be momentarily unreachable; health poll will recover */
+    }
+    return () => {
+      try { ws?.close() } catch { /* noop */ }
+    }
+  }, [api, online, loadWorkspaces])
 
   if (!online || !api) return <div className="p-8 text-text-secondary">Mnemosyne engine is not running.</div>
 
@@ -136,18 +174,20 @@ function Dashboard() {
         </div>
       </aside>
       <main className="flex-1 overflow-y-auto">
+        {/* `key` includes refreshKey so data views remount/reload on a live event.
+            Settings is excluded so an in-progress edit isn't wiped by a refresh. */}
         {!active ? (
           <p className="p-8 text-text-secondary">No workspaces yet.</p>
         ) : page === "overview" ? (
-          <Overview api={api} workspaceId={active.id} />
+          <Overview key={refreshKey} api={api} workspaceId={active.id} />
         ) : page === "graph" ? (
-          <div className="h-full"><GraphTab api={api} workspaceId={active.id} /></div>
+          <div className="h-full"><GraphTab key={refreshKey} api={api} workspaceId={active.id} /></div>
         ) : page === "memory" ? (
-          <MemoryBrowser api={api} workspaceId={active.id} />
+          <MemoryBrowser key={refreshKey} api={api} workspaceId={active.id} />
         ) : page === "conflicts" ? (
-          <ConflictManager api={api} workspaceId={active.id} />
+          <ConflictManager key={refreshKey} api={api} workspaceId={active.id} />
         ) : page === "sessions" ? (
-          <div className="h-full"><SessionReplay api={api} workspaceId={active.id} /></div>
+          <div className="h-full"><SessionReplay key={refreshKey} api={api} workspaceId={active.id} /></div>
         ) : (
           <SettingsPage api={api} />
         )}
