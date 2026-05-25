@@ -1,0 +1,63 @@
+[project]
+name = "mnemosyne-engine"
+version = "1.0.0"
+description = "Local-first adaptive cognitive state engine for AI tools"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.110",
+    "uvicorn[standard]>=0.29",
+    "pydantic>=2.6",
+    "httpx>=0.27",
+    "cryptography>=42.0",
+    "tiktoken>=0.7",
+    "qdrant-client>=1.8",
+    "spacy>=3.8,<3.9",
+    # Ship the small English model directly so `pip install` is one step (no manual
+    # `python -m spacy download`). Pinned to match the spaCy line above. If this
+    # wheel can't be fetched, NER degrades gracefully and you can install it later.
+    "en_core_web_sm @ https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl",
+    # Embeddings run in-process via fastembed (ONNX, no daemon) — keeps engine RAM
+    # modest and resolves the dim conflict (bge-small = 384). See memory:
+    # project-backend-language. Ollama is used only for the optional LLM pass.
+    "fastembed>=0.3",
+    # SQLCipher: encrypted storage (AES-256 at rest). Prebuilt wheels per platform
+    # — sqlcipher3-wheels ships Windows binaries (no compiler needed), sqlcipher3-binary
+    # covers macOS/Linux. If neither is importable the engine falls back to stdlib
+    # sqlite3 with a warning and reports encryption_at_rest=false (Doc 11 risk row).
+    "sqlcipher3-wheels>=0.5; platform_system == 'Windows'",
+    "sqlcipher3-binary>=0.5; platform_system != 'Windows'",
+]
+
+[project.scripts]
+mnemosyne-engine = "backend.main:main"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.23",
+    "pytest-benchmark>=4.0",
+    "ruff>=0.3",
+    "mypy>=1.9",
+]
+
+[tool.pyapp]
+# Bundle the engine into a single standalone executable per platform (Doc 16 §2.4).
+project = "mnemosyne-engine"
+version = "1.0.0"
+python-version = "3.11"
+entry-point = "backend.main:main"
+distribution = "standalone"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.mypy]
+strict = true
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+testpaths = ["tests"]
+filterwarnings = ["ignore::DeprecationWarning"]
