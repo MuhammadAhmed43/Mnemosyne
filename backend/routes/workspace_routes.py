@@ -19,8 +19,19 @@ async def list_workspaces(
     status: Optional[str] = Query(default="active"),
     sort: str = Query(default="last_active"),
 ) -> dict:
-    wss = request.app.state.container.workspace_service.list(status, sort)
-    return {"workspaces": [w.model_dump(mode="json") for w in wss], "total": len(wss)}
+    c = request.app.state.container
+    wss = c.workspace_service.list(status, sort)
+    # Refresh node_count from the live store. The stored field is only updated on
+    # a health check, so it goes stale (shows 0) and makes populated workspaces
+    # look empty in the popup/dashboard. Counting active nodes is cheap.
+    out = []
+    for w in wss:
+        try:
+            w.node_count = c.node_repo(w.id).count(w.id)
+        except Exception:  # noqa: BLE001 — a missing/locked ws shouldn't break the list
+            pass
+        out.append(w.model_dump(mode="json"))
+    return {"workspaces": out, "total": len(wss)}
 
 
 @router.post("/workspaces", status_code=201, response_model=Workspace)
