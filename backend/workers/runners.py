@@ -123,7 +123,6 @@ async def cleanup_worker(container: ServiceContainer) -> None:
 
 
 async def backup_worker(container: ServiceContainer) -> None:
-    import sqlite3
 
     while True:
         await asyncio.sleep(_seconds_until_hour(2))

@@ -13,8 +13,7 @@ from backend.models.enums import WorkspaceStatus
 from backend.models.workspace import Workspace
 from backend.repositories.audit_repo import AuditRepository
 from backend.repositories.conflict_repo import ConflictRepository
-from backend.repositories.edge_repo import EdgeRepository
-from backend.repositories.node_repo import NodeRepository, row_to_node
+from backend.repositories.node_repo import NodeRepository
 from backend.repositories.pending_review_repo import PendingReviewRepository
 from backend.repositories.workspace_repo import WorkspaceRepository
 from backend.services.embedding_service import EmbeddingService

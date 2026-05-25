@@ -11,6 +11,17 @@ services are constructed per call from the cached connection (cheap).
 from __future__ import annotations
 
 import asyncio
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:  # Plan-12 extras are lazy-imported in their factory methods to
+    # avoid heavy/circular imports; declare them here only for type checkers.
+    from backend.repositories.feedback_repo import FeedbackRepository
+    from backend.repositories.thread_repo import ThreadRepository
+    from backend.services.feedback_service import FeedbackService
+    from backend.services.graph_diff_service import GraphDiffService
+    from backend.services.merge_service import WorkspaceMergeService
+    from backend.services.nl_query_service import NaturalLanguageQueryService
+    from backend.services.snapshot_service import SnapshotService
 
 from backend.config import MnemosyneConfig
 from backend.db.manager import DatabaseManager
