@@ -23,7 +23,10 @@ logger = logging.getLogger("mnemosyne.workspace")
 
 NEEDS_NEW_WORKSPACE = ""  # sentinel
 INFER_THRESHOLD = 0.55  # Doc 10 §8 — at/above this, route to the matched workspace
-AUTO_CREATE_MAX_SIM = 0.50  # below this (doesn't really fit any workspace) -> spin up a new one
+# Mirror the infer threshold: if a substantive turn doesn't clearly belong to ANY
+# existing workspace (similarity < 0.55), give it its own workspace rather than
+# forcing it into a loosely-related one.
+AUTO_CREATE_MAX_SIM = 0.55
 
 # Filler words stripped when naming an auto-created workspace from a message.
 _NAME_STOPWORDS = {
