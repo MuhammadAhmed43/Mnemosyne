@@ -3,10 +3,8 @@
 from __future__ import annotations
 
 import sqlite3
-from typing import Optional
 
 from backend.models.thread import ConversationThread
-from backend.utils.time import now_utc
 
 
 class ThreadRepository:

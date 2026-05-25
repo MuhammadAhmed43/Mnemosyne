@@ -5,7 +5,6 @@ from __future__ import annotations
 import sqlite3
 from typing import Optional
 
-from backend.utils.ids import generate_id
 from backend.utils.time import now_utc
 
 _COUNTERS = {"turn_count", "capture_count", "extraction_count", "nodes_extracted", "nodes_pending"}
