@@ -1,0 +1,782 @@
+conflicts:
+
+
+IMPLEMENTATION-PLANS
+✅ Plan 00 — Master Index, Architecture & File Structure — Audit Complete
+Here are my findings:
+
+🔴 CONFLICTS (2)
+Workspace limit mismatch
+
+Requirements (Doc 02, F-002): "Maximum 50 active workspaces per user"
+Requirements (Doc 03, §9): "Up to 100 active workspaces"
+Plan 00: Does not clarify which is correct. The 50 from the PRD (Doc 02) is the product-level acceptance criteria and should take precedence since Doc 03 is an outer design target. No fix needed in Plan 00 — this is a requirements-internal inconsistency, but Plan 00 should note it.
+Storage layout — audit_log.jsonl location inconsistency
+
+Requirements (Doc 03, §6): audit_log.jsonl lives under each workspace: ~/.mnemosyne/workspaces/{workspace_id}/audit_log.jsonl
+Plan 00: Shows BOTH per-workspace audit_log.jsonl AND a global logs/audit.jsonl. This is actually correct — per-workspace audit + global immutable trail — but should be explicitly clarified.
+🟡 MISSING ITEMS (3)
+Missing platform_mappings table — Requirements Doc 07 §3.3 defines a platform_mappings table in global.db. Plan 00's storage layout and file structure don't reference it, but it is critical for workspace auto-detection (UC-07, UC-08).
+
+Missing onboarding_events table — Doc 17 §10 defines onboarding_events in global.db for cold-start metrics tracking. Plan 00 has onboarding_repo.py in the file structure but doesn't mention the table in the storage layout.
+
+Missing schema_migrations table — Doc 07 §5 defines a schema_migrations tracking table. Not mentioned in Plan 00.
+
+✅ NO ACTION NEEDED — These are cosmetic and non-blocking for Plan 00 since it's the master index.
+Type c and I'll audit Plan 01 — Models, Config & Database.
+
+
+c
+Now I have all the data I need for a thorough audit of Plan 01. Let me compile my findings.
+
+✅ Plan 01 — Models, Config & Database Schema — Audit Complete
+Here are my findings cross-referencing Plan 01 against Docs 04, 05, 07, 08, 10, 13, and 14:
+
+🔴 CONFLICTS (5)
+1. node_versions table missing workspace_id and importance_score columns
+
+Req (Doc 07 §2.3): node_versions includes workspace_id TEXT NOT NULL and importance_score REAL
+Plan 01 (line 582-593): Missing both columns — only has id, node_id, version, content, structured_data, valid_from, valid_until, changed_by, change_reason
+2. node_versions table missing archived_at column
+
+Req (Doc 07 §2.3): archived_at TEXT NOT NULL column is present
+Plan 01: Not included. This is needed for audit trail integrity.
+3. pending_reviews table missing candidate_type, candidate_content, source_session_id, source_platform, review_action columns
+
+Req (Doc 07 §2.5): Defines candidate_type, candidate_content, source_session_id, source_platform, and review_action columns
+Plan 01 (line 652-664): Only stores candidate_data as a JSON blob. Missing discrete columns for type/content/session/platform/action that Doc 07 requires for direct SQL queries.
+4. conflict_events table column name mismatch: similarity_score missing
+
+Req (Doc 07 §2.4): Has similarity_score REAL as a separate column alongside contradiction_score
+Plan 01 (line 636): Only has contradiction_score. Missing similarity_score which is used in the conflict detection pipeline (Doc 05 §3.2 Method A: cosine similarity > 0.85).
+5. Conflict type enum value mismatch between Plan and Requirements
+
+Req (Doc 05 §2): Type 4 is PREFERENCE (as used in Doc 07 constraint check); Type 5 is LOGICAL_ERROR
+Plan 01 (line 69): Uses PREFERENCE_DRIFT and RELATIONSHIP_CONFLICT instead. These are renamed but not aligned with the SQL constraint in Doc 07 §2.4 which uses 'PREFERENCE' and 'LOGICAL_ERROR'.
+🟡 MISSING ITEMS (6)
+1. Missing WorkingMemory class
+
+Req (Doc 04 §3): Defines a WorkingMemory class (in-memory, not persisted, max 50 nodes, promotion logic to episodic). Plan 01 models the WORKING tier enum but doesn't implement the WorkingMemory in-memory manager.
+2. Missing workspace columns: color, icon, capture_enabled, memory_health_score, summary_embedding_id, summary_text
+
+Req (Doc 07 §3.1): The workspaces table includes color, icon, capture_enabled, memory_health_score, summary_embedding_id, summary_text
+Plan 01 (line 454-466): Missing all six. summary_embedding_id is critical for workspace auto-detection (Doc 10 §8).
+3. Missing sessions columns: turn_count, nodes_pending, working_memory_snapshot
+
+Req (Doc 07 §2.6): Includes turn_count, nodes_pending, working_memory_snapshot TEXT
+Plan 01 (line 617-628): Has capture_count and extraction_count but missing the others. working_memory_snapshot is required by the working memory tier design.
+4. Missing schema_migrations table definition
+
+Req (Doc 07 §5): Defines CREATE TABLE schema_migrations (version INTEGER PRIMARY KEY, name TEXT NOT NULL, applied_at TEXT NOT NULL)
+Plan 01 (line 694): References schema_migrations in migration runner code but never provides the CREATE TABLE statement.
+5. Missing extracted_at column in memory_nodes
+
+Req (Doc 04 §2.1, Doc 07 §2.1): extracted_at TEXT column is part of the provenance block
+Plan 01 (line 520-547): Missing from the SQL schema. The Pydantic model also doesn't have it.
+6. Missing integrity check queries
+
+Req (Doc 07 §6): Defines check_integrity() for orphaned edges and PRAGMA checks, run weekly
+Plan 01: Not covered. Should at least reference it as a utility/worker concern.
+ℹ️ OBSERVATIONS (non-blocking)
+Plan 01 adds DECAYED to NodeStatus — not in requirements (Doc 04 §2.1 uses only ACTIVE/ARCHIVED/PENDING_REVIEW/SUPERSEDED). This is an addition, not a conflict, but the SQL CHECK constraint in Doc 07 doesn't allow it.
+Plan 01 adds extra EdgeType values (DERIVED_FROM, BLOCKED_BY, SUPPORTS) beyond Doc 04. These are fine as additions but the SQL CHECK constraint in Doc 07 §2.2 would need updating.
+The platform_mappings table is placed in the per-workspace DB in Plan 01 (line 667-674) but Doc 07 §3.3 defines it in the global DB. This should be global since workspace detection needs cross-workspace URL matching.
+Type c to proceed to Plan 02 — Extraction Pipeline.
+
+
+✅ Plan 02 — Extraction Pipeline — Audit Complete
+Cross-referencing against Docs 06, 10, 13, 14.
+
+🔴 CONFLICTS (4)
+1. LLM pass always runs — violates Doc 06 §5.1 conditional trigger logic
+
+Req (Doc 06 §5.1): "LLM extraction is ONLY triggered when: rule-based + NER passes didn't find any goals or decisions, conversation turn is > 3 sentences, text contains first-person statements about plans/preferences, text discusses multiple complex topics"
+Plan 02 (line 725): llm_candidates = await self.llm.extract(user_msg, ai_msg) — runs unconditionally (only skipped if Ollama is unavailable). Missing the should_run_llm_pass() gating function from Doc 06 §10.
+Fix: Add a should_run_llm_pass(text, rule_candidates, ner_candidates) check before the LLM call, matching Doc 06 §10 line 482.
+2. LLM prompt missing workspace_summary context for disambiguation
+
+Req (Doc 06 §5.3): The LLM user prompt includes {workspace_summary} — "Workspace context (for disambiguation): {workspace_summary}"
+Plan 02 (line 404-438): The LLM_EXTRACTION_PROMPT has no workspace context parameter. This is important for entity disambiguation (e.g., distinguishing "Python" the language from "python" the file).
+Fix: Add workspace summary to the prompt and pass it through the pipeline.
+3. LLM prompt JSON format mismatch with Doc 06
+
+Req (Doc 06 §5.3): LLM output is structured as {"goals": [...], "decisions": [...], "preferences": [...], "open_problems": [...], "technical_facts": [...]} — grouped by type with type-specific structured data.
+Plan 02 (line 427-437): Uses a flat JSON array [{"type": "...", "content": "...", ...}]. This is a different contract. The Doc 06 format provides richer per-type structured data (e.g., priority, deadline for goals; rationale, reversible for decisions).
+Fix: Either align the prompt to Doc 06's grouped format (and update _parse_response), or document the deviation with rationale.
+4. Rule-based tech extraction confidence too low vs requirements
+
+Req (Doc 06 §3.1): Tech facts extracted by rule-based have confidence=0.90
+Plan 02 (line 183): Rule-based tech context extraction uses confidence=0.75. This mismatch means tech facts that Doc 06 intended to auto-commit would instead go to pending review.
+🟡 MISSING ITEMS (6)
+1. Missing RATIONALE_TRIGGERS from Doc 06 §3.2
+
+Req (Doc 06 §3.2): Defines RATIONALE_TRIGGERS patterns (because, reason is, since, due to, to avoid/prevent/reduce/improve). Used to extract the WHY behind decisions.
+Plan 02: RuleBasedExtractor extracts decision sentences but never attempts to pull out the rationale into structured_data.rationale. This is a key differentiator for the decision node quality.
+2. Missing COMPLETION_TRIGGERS from Doc 06 §3.3
+
+Req (Doc 06 §3.3): Defines COMPLETION_TRIGGERS for detecting completed goals/tasks (completed, finished, shipped, launched, deployed, done with, is live).
+Plan 02: EVENT_TRIGGERS (line 158-166) partially covers this, but doesn't connect completions back to existing GOAL nodes to update their status. Doc 06's completions should trigger a GOAL → COMPLETED state change, not just create a new EVENT node.
+3. Missing PRODUCT and CONCEPT entity types in NER
+
+Req (Doc 06 §4.2): Entity labels include PRODUCT and CONCEPT in addition to PERSON, ORG, TECH, DATE, MONEY.
+Plan 02 (line 326-366): Only handles PERSON, ORG, DATE/TIME, and TECH. Missing PRODUCT, CONCEPT, and MONEY entity types.
+4. Missing MONEY entity extraction
+
+Req (Doc 06 §4.2): MONEY = "Budget or financial reference" — should be captured as an extraction candidate.
+Plan 02: Not handled at all in NERExtractor.
+5. Missing corroborated_by tracking on candidates
+
+Req (Doc 06 §6): Merge logic tracks candidate.corroborated_by as a list of passes that found the same thing, used in compute_final_confidence().
+Plan 02 (line 545-592): The ConfidenceScorer merges by grouping but doesn't maintain a corroborated_by list on candidates. The Doc 06 approach uses this for explicit corroboration boost and context boost separately.
+6. Missing context_boost and explicit_language_boost in confidence scoring
+
+Req (Doc 06 §6): compute_final_confidence() applies three separate boosts: corroboration (+0.08/pass), workspace context corroboration (+0.05), and explicit language boost (+0.10 for words like "decided", "confirmed").
+Plan 02 (line 574-576): Only applies AGREEMENT_BOOST = 0.12 per additional pass. Missing the workspace context check and explicit language boost.
+ℹ️ OBSERVATIONS (non-blocking)
+Plan 02 adds INSIGHT and CONSTRAINT to the LLM extraction types — these are plan additions not in Doc 06 but defined in Plan 01 enums. Fine as additions.
+The trivial check in Plan 02 (line 712: len(user_msg.split()) < 5 and len(ai_msg.split()) < 10) is different from Doc 10 §2's _is_trivial() which checks len(combined) < 50 chars and has a _is_pure_code() check. Both should align.
+Plan 02 includes importance_scorer.py (File 7a) — this is a good gap fix from Doc 04 §9 that was missing in the requirements pipeline. ✅
+Type c to proceed to Plan 03 — Knowledge Graph & Core Services
+
+
+✅ Plan 03 — Knowledge Graph & Core Services — Audit Complete
+Cross-referencing against Docs 03, 04, 05, 07, 10, 14.
+
+🔴 CONFLICTS (4)
+1. RetrievalService and IntentService completely missing from Plan 03
+
+Req (Doc 10 §3): RetrievalService is a full service class with parallel multi-source retrieval (_retrieve_active_goals, _retrieve_recent_decisions, _retrieve_open_problems, _retrieve_semantic_relevant, _retrieve_high_importance), ranking, token budget allocation, and context string construction — ~200 lines of critical logic
+Req (Doc 10 §6): IntentAnalyzer is its own service with multi-signal analysis
+Plan 03 (line 539-553): Only has stubs for workspace_service.py, embedding_service.py, capture_service.py, onboarding_service.py. The entire RetrievalService and IntentService are not covered. Plan 00's file structure lists retrieval_service.py and intent_service.py as separate files, but Plan 03 never implements them.
+Fix: Add full RetrievalService and IntentService implementations to Plan 03, or create a dedicated plan for them.
+2. Graph traversal CTE only follows outgoing edges — Doc 07 §4 follows both directions
+
+Req (Doc 07 §4): The recursive CTE uses e.source_node_id = c.node_id OR e.target_node_id = c.node_id — bidirectional graph walk
+Plan 03 (line 44-46): CTE only follows e.source_node_id = gw.id → e.target_node_id — unidirectional. This means if Node A → Node B, traversing FROM Node B will never find Node A.
+Fix: Update CTE to match Doc 07's bidirectional traversal pattern.
+3. Consolidation merge doesn't create SUPERSEDES edge
+
+Req (Doc 10 §5): Consolidation merges archive the loser with reason=f"Merged into {winner.id}" and there's an implicit expectation of graph traceability
+Req (Doc 05 §4 Strategy 1): Temporal resolution creates SUPERSEDES edge between winner and loser
+Plan 03 (line 519-527): The _merge_similar() method doesn't create a SUPERSEDES edge after archiving the loser. The conflict auto_resolve for TEMPORAL strategy correctly creates this edge (line 258-261), but consolidation merge doesn't. This breaks graph traceability.
+4. workspace_service.infer_workspace() signature mismatch with Doc 10 §8
+
+Req (Doc 10 §8): infer_workspace(user_message, ai_response, tab_url) — takes 3 parameters and uses the tab_url for signal boosting
+Plan 03 (line 547): infer_workspace(text: str) — takes a single string. Drops tab_url entirely. URL-based inference is critical for workspace auto-detection (UC-07/08).
+🟡 MISSING ITEMS (5)
+1. Missing context string builder (_build_context_string)
+
+Req (Doc 10 §3): The RetrievalService._build_context_string() formats output by node type sections (Goals, Decisions, Problems, Tech Stack, Preferences, Key People) with structured formatting
+Plan 03: No implementation. This is the final output that gets injected into AI platforms.
+2. Missing workspace health calculation
+
+Req (Doc 10 §8): workspace.memory_health_score is a denormalized metric. Doc 07 §3.1 stores it.
+Plan 03 (line 549): get_health() is listed as a stub but has no implementation. Should compute health from node counts, conflict ratio, decay stats, and coverage gaps.
+3. Missing DataSanitizer in CaptureService
+
+Req (Doc 10 §2): CaptureService.__init__ takes a DataSanitizer object: sanitizer: DataSanitizer
+Plan 03 (line 574-583): CaptureService.ingest() lists sensitive data check as step 1 but doesn't integrate a DataSanitizer class. This should delegate to the sensitive filter from Plan 02.
+4. Missing ConsolidationResult and DecayCycleResult return types
+
+Req (Doc 10 §4, §5): Both services return typed result objects: DecayCycleResult(archived, pruned, updated) and ConsolidationResult(merged, checked)
+Plan 03: run_decay_cycle() logs stats dict (line 487) but doesn't return a typed result. run_consolidation() (line 507) has no return value at all.
+5. Missing export_json / import_json implementation
+
+Plan 03 (line 551-552): export_json and import_json are listed as method signatures on WorkspaceService but have no implementation detail. Doc 08 §5 defines the export/import API contract, so the service should handle: all nodes, edges, versions, and workspace metadata as a complete bundle.
+ℹ️ OBSERVATIONS (non-blocking)
+Plan 03 correctly implements the WorkingMemory + WorkingMemoryManager as a gap fix from Doc 04 §3. ✅
+Entity disambiguation detection (§8) is a solid gap fix from Doc 05 §2 Type 6. ✅
+The conflict type table at line 764-772 drops GOAL_STATE and SEMANTIC_DRIFT from the original Doc 05 conflict types. These should be retained.
+node_repo.increment_reinforcement() (line 28-35) correctly implements differentiated reinforcement from Doc 04 §8. ✅
+Type c to proceed to Plan 04 — API Layer & Background Workers.
+
+
+✅ Plan 04 — API Layer & Background Workers — Audit Complete
+Cross-referencing against Docs 08, 10, 13, 14, 16.
+
+🔴 CONFLICTS (5)
+1. Capture response missing estimated_processing_ms and sensitive_data_detected fields
+
+Req (Doc 08 §3): POST /capture response includes estimated_processing_ms and sensitive_data_detected fields
+Plan 04 (line 125): Only returns {capture_id, status, workspace_id, reason} — missing both fields from the Doc 08 contract
+2. Capture status response missing critical fields
+
+Req (Doc 08 §3): GET /capture/{id}/status returns auto_committed, pending_review, processing_time_ms, nodes_created[], pending_ids[]
+Plan 04 (line 127-129): Only returns a generic CaptureResult model — no implementation detail. The CaptureResult model from Plan 01 doesn't include auto_committed, processing_time_ms, nodes_created, or pending_ids fields.
+3. Context endpoint response format mismatch
+
+Req (Doc 08 §4): Response includes workspace object (with id + name), nodes_available, freshness_score, and injection_format fields
+Plan 04 (line 142-143): Response described as {workspace_id, context_string, nodes_included[], token_count, retrieval_ms} — missing nodes_available, freshness_score, injection_format, and uses flat workspace_id instead of nested workspace object
+4. Workspace list endpoint missing sort and status query param variants
+
+Req (Doc 08 §5): GET /workspaces supports status with values active/archived/paused/all and sort with last_active/created_at/name
+Plan 04 (line 152): Only has status: Optional[WorkspaceStatus] — missing sort parameter and the paused status variant
+5. Node boost endpoint contract mismatch
+
+Req (Doc 08 §6): POST /nodes/{id}/boost takes {"boost_amount": 0.2, "reason": "user_explicit"} — an additive boost
+Plan 04 (line 184-185): Takes importance: float, permanent: bool — sets absolute importance, not additive. Different semantics.
+🟡 MISSING ITEMS (7)
+1. Missing structured error response format
+
+Req (Doc 08 §13): Defines a standard error response: {"error": {"code": "...", "message": "...", "details": {...}, "timestamp": "..."}} with 7 specific error codes
+Plan 04: No error handler middleware or exception classes. No error_codes.py or structured error responses.
+2. Missing workspace_suggestion WebSocket event
+
+Req (Doc 08 §12): WS events include workspace_suggestion — when the system detects a new project context and suggests creating a new workspace
+Plan 04 (line 311-312): WebSocket lists extraction_complete, conflict_detected, node_created, pending_review_added, decay_completed but NOT workspace_suggestion
+3. Missing pagination on node list endpoint
+
+Req (Doc 08 §6): GET /nodes response includes total, limit, offset pagination fields. Query params include offset, sort, and search
+Plan 04 (line 172-174): Only has limit — missing offset, sort, and search params. Missing paginated response envelope.
+4. Missing GET /workspaces/{id}/nodes/{node_id} enriched response
+
+Req (Doc 08 §6): Single node GET "includes: node data + version history + connected edges + conflict events"
+Plan 04 (line 176-177): Simple get_node(node_id) — no mention of enriched response with versions, edges, and conflicts.
+5. Missing workspace DELETE confirmation body
+
+Req (Doc 08 §5): DELETE /workspaces/{id} requires {"confirm": true, "export_first": true} body. If export_first is true, returns the JSON export before deleting.
+Plan 04 (line 163-164): Simple delete_workspace(workspace_id: str) — no confirmation pattern, no export-before-delete.
+6. Missing pending review source_context field
+
+Req (Doc 08 §8): Pending review items include source_context — "the conversation snippet that generated this"
+Plan 04 (line 348-354): PendingReview only stores candidate_data as JSON blob. Missing source_context for user review.
+7. Missing network activity logging
+
+Req (Doc 12, UC-22): All network activity must be logged. Plan 01 defines network_activity table. Plan 04 has no middleware or interceptor to log outgoing requests (e.g., Ollama calls).
+ℹ️ OBSERVATIONS (non-blocking)
+Plan 04 includes crash recovery via startup_recovery() and DiskBackedQueue with JSONL journal — excellent addition not explicitly in requirements but aligned with Doc 14's fail-gracefully principle. ✅
+The retry logic in extraction_worker (3 attempts with exponential backoff, line 367-371) is a solid robustness addition. ✅
+Plan 04 properly uses HTTPS with self-signed cert and Bearer token auth matching Doc 08 §2 and Doc 13. ✅
+CORS is correctly restricted to chrome-extension://{EXTENSION_ID} matching Doc 13's network isolation. ✅
+Type c to proceed to Plan 05 — Retrieval & Context Engine.
+
+4:52 AM
+
+
+✅ Plan 05 — Retrieval & Context Engine — Audit Complete
+Cross-referencing against Docs 03, 04, 08, 10, 14.
+
+🔴 CONFLICTS (3)
+1. workspace_detection.infer_workspace() still takes single text param — missing tab_url
+
+Req (Doc 10 §8): infer_workspace(user_message, ai_response, tab_url) — URL signal is critical. Also uses workspace.summary_embedding_id (pre-computed) for comparison, not re-embedding workspace text each time
+Plan 05 (line 388): infer_workspace(self, text: str) — single param, re-embeds workspace text {ws.name} {ws.description} {' '.join(ws.tags)} on every call instead of using pre-computed summary_embedding_id. This is both an API mismatch AND a performance regression — re-embedding all workspaces on every inference call violates the <300ms retrieval target.
+Fix: Use pre-computed summary_embedding_id from workspaces table and add tab_url parameter for URL-based matching.
+2. Context string header format mismatch
+
+Req (Doc 10 §3): Context string starts with [MNEMOSYNE — Workspace: {workspace.name}]
+Plan 05 (line 340): Uses [WORKSPACE: {workspace_name}] — different prefix. The MNEMOSYNE prefix is important because it helps AI platforms understand the context source. Also uses ## {label} markdown headers, while Doc 10 uses {Label}: with bullet points — no markdown formatting.
+Fix: Align header format and section formatting with Doc 10 §3.
+3. Recency factor uses hardcoded 0.1 decay rate instead of node's own decay_rate
+
+Req (Doc 04 §8): recency_factor = exp(-decay_rate × days_since_last_access) — uses node's specific decay_rate
+Plan 05 (line 263): recency = math.exp(-0.1 * days_since) — hardcoded 0.1 for all nodes. This means decisions (decay_rate=0.02) and preferences (decay_rate=0.005) decay from retrieval ranking at the same rate as events (decay_rate=0.08), which is wrong.
+Fix: Use node.decay_rate instead of hardcoded 0.1.
+🟡 MISSING ITEMS (5)
+1. Missing IntentAnalyzer multi-signal approach from Doc 10 §6
+
+Req (Doc 10 §6): IntentAnalyzer.analyze() combines 4 signals: tab URL, recent session history (embeds last 3 session summaries), time-of-day patterns, and user hint. Returns Intent with query_vector (averaged embeddings) and primary_signal.
+Plan 05 (line 74-91): IntentService.classify() only does keyword matching on the hint text. No embedding, no session history, no URL signals, no query_vector. This cripples the semantic retrieval source since _get_semantic_matches() only has the raw hint text.
+2. Missing enriched context formatting per node type
+
+Req (Doc 10 §3): Context string builder includes type-specific formatting:
+Goals: • {content} [{priority}] · Due: {deadline}
+Decisions: • {content} ({date}) — {rationale}
+Tech Facts: grouped by category: • {category.title()}: {values}
+Entities/People: • {content} ({role})
+Plan 05 (line 365-366): All nodes formatted as bare - {n.content} — losing all the structured metadata. Goals without priorities, decisions without dates/rationale, tech facts not grouped by category.
+3. Missing freshness_score in ContextResult
+
+Req (Doc 08 §4): Context response includes freshness_score: 0.91 — represents how current the context is
+Plan 05: ContextResult (from Plan 01) doesn't include freshness_score. Should compute it from the average recency of included nodes.
+4. Missing nodes_available count in response
+
+Req (Doc 08 §4): Response includes nodes_available: 89 — total nodes available in workspace for context
+Plan 05: Only returns nodes_included count. Missing the total available count for the UI to show "showing 12 of 89 nodes".
+5. Missing working memory integration in retrieval
+
+Req (Doc 04 §3): Working memory (Tier 1) stores "current active goal in this conversation" and "entities mentioned in this session" — these should be included in retrieval since they represent the active session state.
+Plan 05: The retrieval only queries persisted nodes from SQLite. No integration with WorkingMemoryManager from Plan 03 to include current session state.
+ℹ️ OBSERVATIONS (non-blocking)
+Plan 05 correctly implements parallel retrieval via asyncio.gather() matching Doc 10 §3. ✅
+Conflict filtering (line 290-298) correctly removes BOTH sides of pending conflicts per Doc 14 §4. ✅
+Token budget trimming skips oversized nodes and tries shorter ones — good greedy algorithm. ✅
+Platform-specific context wrapping (Claude XML tags, ChatGPT bracketed, Gemini plain) is a solid plan addition. ✅
+record_assignment() for URL→workspace learning (line 418-422) is a good feature for improving auto-detection over time. ✅
+Type c to proceed to Plan 06 — Chrome Extension Core.
+
+
+✅ Plan 06 — Chrome Extension Core — Audit Complete
+Cross-referencing against Docs 03, 09, 11, 13, 14.
+
+🔴 CONFLICTS (3)
+1. Design token colors don't match Doc 09 §2.1
+
+Req (Doc 09 §2.1): Background colors: --color-bg-primary: #0A0A0F, --color-bg-secondary: #111118, --color-bg-tertiary: #1A1A24. Text: --color-text-primary: #F0F0F5, --color-text-secondary: #8B8BA7
+Plan 06 (line 47-55): Uses different values: surface: '#1E1E2E', text-primary: '#E4E4E7', text-secondary: '#A1A1AA'. These are close but not the exact tokens from the design spec.
+Fix: Use the exact CSS custom properties from Doc 09 §2.1 as the source of truth.
+2. Client-side sensitive filter doesn't run BEFORE sending capture
+
+Req (Doc 03, Doc 13 §4, Doc 14 §1): "The sensitive data filter is the first thing in the capture pipeline. No other code runs before it." Doc 13 also states dual filtering: client-side AND server-side.
+Plan 06 (line 309-338): onNewResponse() directly sends the capture to background without calling containsSensitiveData() from sensitiveFilter.ts. The client-side filter exists (line 601-613) but is never invoked in the capture flow. This means raw sensitive data reaches the background worker and potentially the engine before filtering.
+Fix: Add containsSensitiveData(userText + aiText) check in onNewResponse() before chrome.runtime.sendMessage().
+3. Missing certificate pinning in extension HTTP client
+
+Req (Doc 13 §3.2): "Extension pins the certificate on install"
+Plan 06: All fetch() calls in background.ts use bare fetch() with no certificate validation or pinning. Self-signed certs will be rejected by default in Chrome. Need to either skip certificate validation for localhost or implement cert pinning via the declarativeNetRequest API.
+🟡 MISSING ITEMS (6)
+1. Missing WebSocket connection for real-time events
+
+Req (Doc 08 §12): WS /ws/events streams events like extraction_completed, conflict_detected, workspace_suggestion
+Plan 06: Background worker only polls /health every 30s. No WebSocket connection to engine. The store has pendingReviewCount but no mechanism to receive live updates when extractions complete, conflicts are detected, or workspace suggestions appear.
+2. Missing design system CSS file
+
+Req (Doc 09 §2): Full design system with CSS custom properties, typography scale, spacing scale, shadows, animations, node type colors
+Plan 06 (line 37-63): Tailwind config only includes basic color mapping. Missing: the full design token CSS file (design-system.css) specified in Plan 00's file structure, with all variables from Doc 09 §2.1-2.6.
+3. Missing @anthropic-ai/sdk justification — this is NOT local-first
+
+Plan 06 (line 26): "@anthropic-ai/sdk": "latest" in dependencies
+Req (Doc 14 §2): "Never send user data externally by default." This SDK would only be for the Cloud Fallback feature which requires explicit user opt-in. It should NOT be a hard dependency — it should be dynamically imported if enabled.
+4. Missing per-platform capture toggle
+
+Req (Doc 02 F-007): "Per-platform toggles" — users can enable/disable capture per platform (Claude on, ChatGPT off, etc.)
+Plan 06: Store only has global captureEnabled boolean (line 531). No per-platform toggle state.
+5. Missing session ID generation and management
+
+Plan 06 (line 331): session_id: getSessionId() is called but getSessionId() is never defined. Need implementation for generating/tracking session IDs — a session = one continuous conversation on one tab. Session should end when tab closes or URL changes.
+6. Missing PAUSED workspace status handling
+
+Req (Doc 07 §3.1, Doc 08 §5): Workspace status includes PAUSED — capture disabled but workspace remains active
+Plan 06: Store's WorkspaceStatus doesn't include PAUSED. Observer doesn't check if the active workspace is paused before capturing.
+ℹ️ OBSERVATIONS (non-blocking)
+Shadow DOM isolation for the injection indicator (line 467-478) is excellent — prevents host page CSS from breaking Mnemosyne UI. ✅
+Offline buffer with IndexedDB replay (line 199-212) matches Plan 00's addition #9 and Doc 14's crash recovery principle. ✅
+Engine restart via native messaging host (line 214-265) is a solid gap fix for UC-18. ✅
+Streaming detection with content stabilization polling (line 341-350) is a good approach for multi-platform support. ✅
+MutationObserver pattern for DOM capture is the correct approach per Doc 03. ✅
+Type c to proceed to Plan 07 — Extension UI: Sidebar & Popup.
+
+
+
+
+✅ Plan 07 — Extension UI: Sidebar & Popup — Audit Complete
+Cross-referencing against Docs 09, 12, 14, 17.
+
+🔴 CONFLICTS (4)
+1. Sidebar width is 360px — Doc 09 specifies 380px default
+
+Req (Doc 09 §4.1): "380px wide" with range: compact 280px, expanded 480px, minimum 260px
+Plan 07 (line 7): "360px wide" — 20px narrower than spec
+Fix: Change to 380px default.
+2. Tab order mismatch
+
+Req (Doc 09 §4.1): Tab order is [Graph] [Memory] [Audit] [Search] — Graph is first
+Plan 07 (line 13-18): Tab order is Memory, Graph, Audit, Search — Memory is first
+Fix: Align tab order to Doc 09 — Graph tab should be default/first.
+3. Graph node colors don't match Doc 09 §2.1
+
+Req (Doc 09 §2.1): --color-node-goal: #10B981 (green), --color-node-decision: #7C3AED (purple), --color-node-task: #3B82F6 (blue), --color-node-fact: #6B7280 (gray)
+Plan 07 (line 115-124): goal: '#22C55E' (different green), decision: '#3B82F6' (blue — should be purple!), technical_fact: '#8B5CF6' (violet — should be gray). Multiple mismatches.
+Fix: Use exact colors from Doc 09 §2.1.
+4. Popup missing several layout elements from Doc 09 §3
+
+Req (Doc 09 §3): Popup includes header with logo + settings gear icon + capture toggle, workspace card with icon/name/memory count/pending count, "Switch workspace" dropdown, pending review section with "Review Now" CTA, and trust indicator footer: 🔒 Local only · No data sent
+Plan 07 (line 296-351): Missing: settings gear icon in header, the trust indicator footer. The trust footer is critical for Doc 09's design philosophy — "Privacy: local-first feel."
+🟡 MISSING ITEMS (7)
+1. Missing keyboard shortcuts implementation
+
+Req (Doc 09 §8): 10+ keyboard shortcuts including Cmd+Shift+M (toggle sidebar), Cmd+K (command palette), Cmd+Shift+Space (toggle capture), G/A/S (navigate tabs), E/D/B (edit/delete/boost selected node), Esc (close/go back)
+Plan 07: CommandPalette.tsx (line 403-409) mentions Cmd+K but has no implementation. No keyboard event listeners anywhere.
+2. Missing graph node detail panel slide-in
+
+Req (Doc 09 §4.3): When a graph node is clicked, a detail panel slides in from the right showing: type badge, full content, created date, source platform, confidence bar, importance bar, rationale, connected nodes list, and [Edit] [Boost] [Delete] actions.
+Plan 07 (line 191-194): showNodeDetail(nodeId) is called but never defined. No NodeDetailPanel component exists.
+3. Missing graph type filter and search bar
+
+Req (Doc 09 §4.3): Graph has "Filter by type (checkbox row at top)" and "Search bar filters visible nodes"
+Plan 07 (line 197-208): GraphTab only has zoom controls overlay. No type filter checkboxes or search bar for node filtering.
+4. Missing sidebar resizability
+
+Req (Doc 09 §9): Sidebar width is user-draggable: compact 280px ↔ expanded 480px, minimum 260px
+Plan 07: Sidebar has fixed width. No drag handle or resize logic.
+5. Missing injection indicator edit/disable controls
+
+Req (Doc 09 §5): Expanded injection indicator includes [Edit before injecting] and [Disable for this session] buttons
+Plan 07: Injection indicator is defined in Plan 06, but neither plan includes edit-before-inject or session-disable functionality.
+6. Missing accessibility features
+
+Req (Doc 09 §12): ARIA labels on icon-only buttons, focus rings (accent color outline), screen reader announcements, prefers-reduced-motion support, color never sole status indicator
+Plan 07: No ARIA attributes on any component. No prefers-reduced-motion media query handling. Icon-only buttons (zoom controls, close) have no accessibility labels.
+7. Missing Memory Tab structured display per Doc 09 §4.2
+
+Req (Doc 09 §4.2): Memory Tab shows goals with filled/hollow circles for active/completed, decisions with date + reason, problems with severity-colored indicators (🔴/🟡/🟢), tech stack grouped by category, people with roles
+Plan 07 (line 88-101): MemoryTab groups by type but delegates to MemoryNodeCard which is a stub (line 358-366). Doesn't show the rich structured formatting — no active/completed circles, no severity indicators, no date+reason formatting.
+ℹ️ OBSERVATIONS (non-blocking)
+Empty states table (line 428-440) covers all the Doc 17 cold start scenarios. ✅
+useDebouncedCallback for search (line 262-267) is a good UX pattern — 300ms debounce prevents excessive API calls. ✅
+Global vs workspace search scope toggle (line 260) correctly maps to UC-21 cross-workspace search. ✅
+ConflictCard stub (line 368-377) correctly describes the side-by-side resolution UI from Doc 09 §4.4. ✅
+Cytoscape.js with cola layout is the correct visualization library per Doc 11. ✅
+
+
+
+
+
+
+
+
+
+
+✅ Plan 08 — Memory Audit Dashboard — Audit Complete
+Cross-referencing against Docs 02, 05, 09, 12, 13, 16.
+
+🔴 CONFLICTS (2)
+1. Dashboard sidebar nav missing "Review" (pending reviews) from Doc 09 §6
+
+Req (Doc 09 §6): Dashboard sidebar includes ⚠️ Review as a dedicated nav item — separate from Conflicts
+Plan 08 (line 15-22): NAV_ITEMS includes Overview, Graph Explorer, Memory Browser, Timeline, Conflicts, Settings — no dedicated Review page. Pending reviews are buried inside Memory Browser's ?filter=pending URL. Doc 09 shows Review and Conflicts as separate sidebar items.
+Fix: Add a dedicated /review route and nav item for pending reviews, or merge the pending review UI into the Conflicts page explicitly.
+2. ConflictResolutionCard resolution options don't match Doc 08 §9
+
+Req (Doc 08 §9): Conflict resolution request body uses strategy: "keep_a" | "keep_b" | "merge" | "custom" with merged_content for merge/custom, and reason field
+Plan 08 (line 414-418): Uses "Keep A", "Keep B", "Both valid", "Custom resolution" — "Both valid" has no API equivalent. Missing the reason field in the resolution form.
+Fix: Align options with API: Keep A → keep_a, Keep B → keep_b, Merge → merge, Custom → custom. Add reason text field. Remove or map "Both valid" to merge or dismiss.
+🟡 MISSING ITEMS (5)
+1. Missing Pending Review page with bulk actions
+
+Req (Doc 12 UC-09): User should be able to review, approve (with optional edits), or reject pending extractions. Doc 09 §4.4 shows a dedicated UI with [✓ Approve] [✎ Edit] [✗ Reject] per item and source context.
+Plan 08: Pending reviews are referenced via a filter on MemoryBrowser (/memory?filter=pending) but MemoryBrowser is designed for committed nodes, not pending candidates. No PendingReviewCard component with approve/edit/reject buttons in the dashboard.
+2. Missing capture status indicator on Overview
+
+Req (Doc 09 §6): Overview shows CAPTURE STATUS: ● Active · Last: 4 min ago — whether capture is active and when the last capture was received.
+Plan 08 (line 107-116): Top stats row has Memory Health, Total Memories, Pending Review, Active Conflicts — no capture status card.
+3. Missing api/getConflictMetrics() in Plan 04's API routes
+
+Plan 08 (line 509-525): Defines a backend endpoint GET /workspaces/{workspace_id}/conflicts/metrics for the conflict metrics dashboard. This endpoint is NOT listed in Plan 04's conflict_routes.py or Doc 08's API spec. It's a Plan 08 addition that needs to be back-ported to the API layer.
+4. Missing Markdown export endpoint
+
+Plan 08 §9B (line 640-652): "Export as Markdown" feature generates a human-readable workspace snapshot. But there's no backend endpoint for this in Plan 04 — only JSON export exists at GET /workspaces/{id}/export.
+5. Missing workspace merge backend support
+
+Plan 08 §9C (line 654-659): "Merge Another Workspace Into This One" — the frontend describes the flow but there's no backend endpoint or service method. Needs POST /workspaces/{id}/merge endpoint and corresponding service logic.
+ℹ️ OBSERVATIONS (non-blocking)
+The Overview page correctly integrates engine health from Doc 16 §5.3 with system status indicators. ✅
+Conflict Metrics dashboard (line 428-503) is an excellent gap fix for Doc 05 §8 — surfaces auto-resolve rate, queue depth, false positive rate, resolution latency, and oldest unresolved. ✅
+Entity Disambiguation Card (line 421-425) correctly provides a different UI for Type 6 conflicts — split/merge/rename options. ✅
+Graph Diff View (§9A) and Memory Snapshots Export (§9B) are solid plan additions not in requirements. ✅
+VersionHistoryModal correctly implements UC-13 with diff highlighting between versions. ✅
+BulkActionsBar supports both soft and hard delete matching UC-12 and Doc 08 §6. ✅
+The Settings page correctly includes per-platform toggles (Claude/ChatGPT/Gemini), custom blocked terms (Doc 13 §4.2), audit log integrity verification, and network activity log (UC-22). ✅
+Type c to proceed to Plan 09 — Onboarding & Cold Start.
+
+
+
+
+
+✅ Plan 09 — Onboarding & Cold Start — Audit Complete
+Cross-referencing against Docs 02, 09, 12, 17.
+
+🔴 CONFLICTS (2)
+1. Ready screen hardcodes Claude.ai redirect — Doc 17 says detect user's platform
+
+Req (Doc 17 §3 Step 4): "Redirects to Claude.ai (or whichever platform the user uses most, detected from browser history heuristics)"
+Plan 09 (line 249): window.open('https://claude.ai', '_blank') — hardcoded to Claude.ai. No browser history detection.
+Fix: Add platform detection logic or at minimum don't auto-redirect to a hardcoded URL — let the user choose.
+2. Badge behavior after first capture not implemented
+
+Req (Doc 17 §3 Step 5): "Badge turns from gray to indigo — capture is live" and "After the first message pair is captured and processed: badge shows a small 1 dot"
+Plan 09: The badge color change is in Plan 06's background.ts (health polling), but there's no logic to show extraction count on the badge (chrome.action.setBadgeText). The first capture badge behavior from Doc 17 Step 5 is completely missing.
+🟡 MISSING ITEMS (5)
+1. Missing Progressive Disclosure timeline (Doc 17 §5)
+
+Req (Doc 17 §5): 9-stage disclosure timeline — features are introduced at specific triggers (install, first 3 extractions, first session ends, second session opens, 3 pending reviews, first conflict, 7 days, 30 days, manual only). "We never explain decay, conflict resolution, or graph traversal to a user who has not yet experienced a basic extraction."
+Plan 09: The nudge schedule (line 372-404) covers some of this, but there's no mechanism to gate UI features behind disclosure stages. For example: the sidebar should not show the Graph tab until the user has 5+ nodes. Conflict resolution UI should not appear until the first conflict. No disclosure state tracking exists.
+2. Missing "Aha Moment" tracking (Doc 17 §3 Step 6)
+
+Req (Doc 17 §3 Step 6, §2): The "aha moment" = first real context injection in Session 2. Should be tracked as an onboarding milestone: aha_moment_at is in the onboarding_state keys (line 522). But there's no code that detects and records this — when the user gets their first injection that contains real extracted content, this event should be logged.
+Plan 09: aha_moment_at is listed in the DB schema keys but never set anywhere. No injection-side tracking.
+3. Missing "Other" platform option on Ready screen
+
+Req (Doc 17 §3 Step 4): Ready screen shows [ ChatGPT ] [ Gemini ] [ Other ] — an "Other" option for users not on the three main platforms
+Plan 09 (line 267-270): Only shows Claude and Gemini links. Missing ChatGPT link alongside them, and missing the [Other] option entirely.
+4. Missing notifications permission in manifest
+
+Plan 09 (line 342-348): Uses chrome.notifications.create() for first capture notification
+Plan 06 (line 71): Manifest permissions are ["storage", "activeTab", "scripting"] — missing "notifications" permission required for chrome.notifications API.
+5. Missing nudge trigger for "first session ends"
+
+Req (Doc 17 §5): Disclosure timeline includes "First session ends → Review your captures nudge in badge"
+Plan 09 (line 372-378): NUDGE_SCHEDULE starts at first_extraction_count >= 3 then jumps to day >= 2. Missing the session-end trigger for the first review nudge.
+ℹ️ OBSERVATIONS (non-blocking)
+Onboarding wizard flow (welcome → engine check → workspace → ready) exactly matches Doc 17 §3 Steps 1-4. ✅
+Engine polling with auto-transition (line 104-117) correctly implements "user clicks nothing" auto-detect. ✅
+Quick-add form correctly creates nodes with user_verified=true, extraction_confidence=1.0, source_platform="manual" per Doc 17 §6. ✅
+Retrospective extraction correctly sends all results to pending review (never auto-committed) per Doc 17 §12. ✅
+Empty states cover all Doc 17 §4 scenarios with primary CTA + secondary path. ✅
+Nudge rules (max 1/day, never if active in last 2 hours, permanently dismissible) match Doc 17 §13. ✅
+Type c to proceed to Plan 10 — Testing & Benchmarks.
+
+
+✅ Plan 10 — Testing & Benchmarks — Audit Complete
+Cross-referencing against Docs 15, 14, 02, 04, 05.
+
+🔴 CONFLICTS (3)
+1. Missing test_resolution_creates_audit_event test from Doc 15 §2.2
+
+Req (Doc 15 §2.2): Includes a full test test_resolution_creates_audit_event that verifies audit_log.get_events(action="conflict_resolved") returns an event with details['strategy'] == 'temporal'
+Plan 10 (line 204-231): TestTemporalResolution and TestDecay exist, but the audit event verification test is dropped entirely. This is a critical governance test — conflict resolution must always be auditable.
+Fix: Add test_resolution_creates_audit_event to tests/unit/conflict/test_temporal.py
+
+2. Missing test_highly_reinforced_node_resists_decay from Doc 15 §2.2
+
+Req (Doc 15 §2.2): Explicitly includes test_highly_reinforced_node_resists_decay verifying reinforcement_count=15 with days=30 results in retention > 0.6
+Plan 10 (line 221-231): Only has test_permanent_never_decays and test_old_unaccessed_decays. Missing the reinforcement resistance test, which validates a core decay formula behavior (reinforcement_bonus = 1 + 0.1 × min(reinforcement_count, 10) from Doc 10 §4).
+Fix: Add the reinforcement decay resistance test.
+
+3. CI pipeline structure — lint path mismatch with Doc 16 §4.2
+
+Req (Doc 16 §4.2): CI lint uses ruff check src/ and mypy src/ --strict
+Plan 10 (line 447-448): Lint targets backend/ not src/. Plan 00's file structure uses backend/ as the root, so Doc 16's src/ references are inconsistent with the actual project structure.
+Fix: Plan 10's backend/ is correct per Plan 00. This is a requirements-internal inconsistency. Plan 10 should note it.
+
+🟡 MISSING ITEMS (8)
+1. Missing entire RetrievalQualityTest class from Doc 15 §4.3
+
+Req (Doc 15 §4.3): Defines RetrievalQualityTest with 4 critical tests: test_active_goals_retrieved_for_any_intent, test_recent_decisions_retrieved_regardless_of_topic, test_superseded_nodes_not_retrieved, test_archived_workspace_nodes_not_contaminating_active
+Plan 10: No retrieval quality tests beyond the integration TestContextRetrieval. The entire RetrievalQualityTest class is missing. test_superseded_nodes_not_retrieved is a safety-critical test.
+
+2. Missing test_sensitive_data_returns_blocked response reason assertion
+
+Req (Doc 15 §2.3): Asserts response.json()["reason"] == "sensitive_data_detected"
+Plan 10 (line 244-245): Only asserts r.json()["status"] == "blocked" — drops the reason field assertion.
+
+3. Missing E2E browser_with_extension fixture definition
+
+Req (Doc 15 §5): Full fixture definition with playwright.chromium.launch_persistent_context(user_data_dir=tmp_path, headless=True, args=[...])
+Plan 10 (line 386-388): Uses the fixture but never defines it. Doc 15 provides the full fixture body.
+
+4. Missing E2E "items" text assertion in injection indicator test
+
+Req (Doc 15 §5): Asserts both "Mnemosyne" in text AND "items" in text
+Plan 10 (line 400-401): Only asserts "Mnemosyne" — drops "items" assertion.
+
+5. Missing node_factory valid_from, valid_until, last_accessed defaults
+
+Req (Doc 15 §8.2): node_factory includes valid_from: datetime.utcnow(), valid_until: None
+Plan 10 (line 118-132): Missing valid_from, valid_until, last_accessed, and source_platform defaults. Needed for temporal versioning tests.
+
+6. Missing "Generic credential" pattern in sensitive filter test parametrize
+
+Req (Doc 15 §2.1): Parametrized test includes ("my password is hunter2", "Generic credential")
+Plan 10 (line 184-191): Only has 6 patterns — missing the generic credential test case from Doc 15.
+
+7. Missing workspace_with_100_nodes fixture
+
+Plan 10 (line 356): test_retrieval_under_300ms uses workspace_with_100_nodes fixture, but only workspace_with_1000_nodes and workspace_with_data (50 nodes) are defined in conftest. Missing the 100-node fixture.
+
+8. Missing FTS latency test in performance tests
+
+Req (Doc 14 §6): Full-text search < 100ms target, Hard limit 300ms
+Plan 10 (line 374-376): Has test_fts_under_100ms ✅ — but also missing workspace_switch latency test (Doc 14 §6: Workspace switch < 100ms, Hard limit 300ms) and sidebar load test (< 300ms).
+
+ℹ️ OBSERVATIONS (non-blocking)
+Plan 10 correctly includes test_preference.py for preference merge strategy tests (Doc 14 §7). ✅
+Cross-platform CI matrix (ubuntu, macos, windows) matches Doc 16 §4.2. ✅
+E2E nightly-only schedule (github.event_name == 'schedule') is a reasonable addition aligned with Doc 15's "Nightly only: Full E2E suite" note. ✅
+PR gate "Performance must not regress >20%" correctly matches Doc 15 §7 / Doc 16 §4.2. ✅
+Benchmark dataset structure (5 personas × 100 samples = 500) matches Doc 15 §4.1 exactly. ✅
+
+
+✅ Plan 11 — Deployment, CI/CD & Installers — Audit Complete
+Cross-referencing against Docs 16, 11, 13, 14.
+
+🔴 CONFLICTS (3)
+1. First-run creates temp subdirectory not specified in Doc 16
+
+Req (Doc 16 §2.1): first_run_setup() creates subdirs: ["workspaces", "backups", "logs", "tls"] — 4 directories
+Plan 11 (line 50): Creates ["workspaces", "backups", "logs", "tls", "temp"] — adds temp. While temp/ is used for crash recovery (Doc 16 §5.4 references temp/capture_queue.jsonl), it's not in the explicit first-run list.
+Fix: Note as intentional addition. temp/ IS needed — it's just not listed in Doc 16's first-run snippet.
+
+2. Windows installer executable name mismatch
+
+Req (Doc 16 §2.2): Uses engine.exe in the BinaryPathName
+Plan 11 (line 100): Uses mnemosyne-engine.exe. The PyApp bundle (line 37) produces mnemosyne-engine.exe.
+Fix: Plan 11's mnemosyne-engine.exe is correct per PyApp config. Doc 16's engine.exe is a shorthand. Plan should note the deviation.
+
+3. macOS data directory path inconsistency (requirements-internal)
+
+Req (Doc 16 §2.1): macOS pkg contents show ~/Library/Application Support/Mnemosyne/
+Req (Doc 16 §5.1): Logs at ~/.mnemosyne/logs/ — dotfile path
+Plan 11 (line 84): Uses Path.home() / ".mnemosyne" consistently.
+This is a requirements-internal inconsistency. Plan 11 uses ~/.mnemosyne/ which aligns with Doc 16 §5.1, the plist paths, and most of the docs.
+
+🟡 MISSING ITEMS (7)
+1. Missing show_notification() on Ollama not found — Doc 16 §2.1
+
+Req (Doc 16 §2.1): show_notification("Ollama not found — LLM extraction disabled...")
+Plan 11 (line 78): Uses logger.warning() — not user-facing. Should surface as a system notification.
+
+2. Missing Uninstall Mnemosyne.app GUI for macOS — Doc 16 §8
+
+Req (Doc 16 §8): "The installer ships an Uninstall Mnemosyne.app that handles this with a GUI."
+Plan 11: Only provides shell script. No GUI uninstaller.
+
+3. Missing Linux uninstall script
+
+Plan 11: Has uninstall_windows.ps1 and uninstall_macos.sh but no uninstall_linux.sh. Should include: systemctl --user stop/disable + rm service file + rm binary.
+
+4. Missing model update CLI command — Doc 16 §6.3
+
+Req (Doc 16 §6.3): mnemosyne-engine update-models CLI command
+Plan 11: No CLI subcommand for model updates.
+
+5. Missing extension↔engine version compatibility check — Doc 16 §3.2
+
+Req (Doc 16 §3.2): Extension checks engine version on startup. If engine version < required: show update notification.
+Plan 11: No version compatibility matrix defined.
+
+6. Missing branch strategy documentation — Doc 16 §4.1
+
+Req (Doc 16 §4.1): Defines main ← develop ← feature/ branching model
+Plan 11: Not documented.
+
+7. Missing sign_and_notarize.sh implementation
+
+Plan 11 (line 286, 490): References scripts/sign_and_notarize.sh but provides no implementation. Should include at minimum: codesign + xcrun notarytool submit outline.
+
+ℹ️ OBSERVATIONS (non-blocking)
+PyApp bundling config matches Doc 16 §2.4 exactly. ✅
+Windows firewall rule for localhost-only (line 112-114) is an excellent security addition per Doc 13. ✅
+RotatingFileHandler with 10MB + 7 backups matches Doc 16 §5.1. ✅
+JsonFormatter correctly omits message content per Doc 14 §1. ✅
+Backup worker uses conn.backup() (SQLite online backup) — correct per Doc 16 §7.1. ✅
+Data directory persists after uninstall matches Doc 16 §8. ✅
+Release checklist (line 458-471) maps to Doc 16 §4.3. ✅
+GitHub Release creation with attached installers matches Doc 16 §4.3 step 9. ✅
+
+
+✅ Plan 12 — My Additions & Enhancements — Audit Complete
+Cross-referencing against all 18 Docs to ensure additions don't conflict with requirements.
+
+🔴 CONFLICTS (3)
+1. Smart Context Templates Claude wrapper doesn't match Doc 10 §3 format
+
+Req (Doc 10 §3): Context string starts with [MNEMOSYNE — Workspace: {workspace.name}] — no closing tag
+Plan 12 (line 78): Claude template adds [End Mnemosyne Context] closing tag not in requirements. Doc 02 §F-005 shows [Context injected by Mnemosyne — edit in sidebar] as the footer.
+Fix: Use Doc 02's footer or no closing tag.
+
+2. Workspace Merge re-indexes all embeddings synchronously — performance violation
+
+Req (Doc 14 §6): Workspace switch < 100ms
+Plan 12 (line 502): execute_merge() calls embedding_service.reindex() in a sequential loop for every node. A 200-node workspace merge would take minutes.
+Fix: Re-indexing should happen in a background worker. The merge itself should only update workspace_id in the vector store metadata.
+
+3. NL Query sends user question to LLM — needs explicit local-only guard
+
+Req (Doc 14 §2): "Never send user data externally by default."
+Plan 12 (line 533-538): NaturalLanguageQueryService sends user's search question to LLM. While local-only via Ollama, there's no guard preventing cloud fallback from being applied to NL queries.
+Fix: Add explicit guard ensuring NL queries never route to cloud LLM fallback.
+
+🟡 MISSING ITEMS (8)
+1. Missing conversation_threads → sessions table integration
+
+Req (Doc 07 §2.6): Sessions table already tracks session_id, turn_count, nodes_pending, working_memory_snapshot
+Plan 12 (line 12-29): ConversationThread duplicates session tracking with its own session_id and turn_count. Should integrate with or extend the existing sessions table, not create a parallel system.
+
+2. Missing extraction_feedback → pending_reviews integration analysis
+
+Plan 12 (line 256-266): Creates extraction_feedback table. But pending_reviews.review_action (from Plan 01 audit) + audit log may already capture this data. Needs justification for separate table.
+
+3. Missing API routes for thread listing and session replay
+
+Plan 12 (line 565-601): SessionReplayPage calls loadThreadNodes() but no API endpoints defined:
+- GET /workspaces/{id}/threads — list threads
+- GET /threads/{id}/nodes — thread nodes
+
+4. Missing workspace template API route
+
+Plan 12 (line 200-207): create_from_template() has no API surface. POST /api/v1/workspaces should accept optional template_key param.
+
+5. Missing feedback service API routes
+
+Plan 12 (line 219-252): record_feedback() and get_adjusted_thresholds() have no endpoints. Should hook into POST /pending-reviews/{id}/resolve and GET /extraction-feedback/thresholds.
+
+6. Missing NL Query API route
+
+Plan 12 (line 530-555): No endpoint for NL query. Should be POST /api/v1/workspaces/{id}/query.
+
+7. Missing graph diff UI → Plan 08 Overview page back-port
+
+Plan 12 (line 375): "Displayed as a 'What's New' card on Overview page" — but Plan 08's Overview doesn't reference GraphDiffCard. Needs back-port.
+
+8. Missing Offline Buffer → background.ts integration code
+
+Plan 12 (line 471): Describes integration but no actual code in Plan 06's background.ts. Need try/catch wrapper around api.capture() calling offlineBuffer.buffer().
+
+ℹ️ OBSERVATIONS (non-blocking)
+Conversation Thread Tracking (Feature #1) is excellent for Session Replay and graph traversal. Aligns with Doc 12 UC-01. ✅
+Smart Context Templates (Feature #2) correctly maps platform wrapping. Noted as good addition in Plan 05 audit. ✅
+Memory Snapshots Markdown Export (Feature #3) aligns with Plan 08 §9B and Doc 12 UC-09. ✅
+Workspace Templates (Feature #4) enhance onboarding (Doc 17 §3). ✅
+Extraction Feedback Loop (Feature #5) addresses Doc 02 §5 "precision > 85%" via dynamic threshold tuning. ✅
+Command Palette (Feature #6) implements Doc 09 §8 Cmd+K. Plan 07 audit flagged this as missing. ✅
+Graph Diff View (Feature #7) solid "What's New" feature. ✅
+Multi-Model Embedding Support (Feature #8) implements BGE-M3 vs nomic-embed from Doc 11 §3. Auto-selection by RAM is smart. ✅
+Offline Extension Buffer (Feature #9) was already noted in Plan 06 audit. Complete implementation here. ✅
+Workspace Merge (Feature #10) provides backend for Plan 08 §9C. ✅
+NL Graph Query (Feature #11) is a premium differentiator. ✅
+Session Replay (Feature #12) correctly builds on Feature #1. ✅
+
+FULL AUDIT COMPLETE — ALL 13 PLANS (00-12) CROSS-CHECKED.
+
+SUMMARY TABLE:
+| Plan | Conflicts | Missing | Observations |
+|------|-----------|---------|-------------|
+| 00   | 2         | 3       | —           |
+| 01   | 5         | 6       | 3           |
+| 02   | 4         | 6       | 3           |
+| 03   | 4         | 5       | 4           |
+| 04   | 5         | 7       | 4           |
+| 05   | 3         | 5       | 5           |
+| 06   | 3         | 6       | 5           |
+| 07   | 4         | 7       | 4           |
+| 08   | 2         | 5       | 6           |
+| 09   | 2         | 5       | 6           |
+| 10   | 3         | 8       | 5           |
+| 11   | 3         | 7       | 8           |
+| 12   | 3         | 8       | 12          |
+| TOTAL| 43        | 78      | 65          |
+
+HIGHEST PRIORITY FIXES:
+1. Plan 10: Add RetrievalQualityTest class from Doc 15 §4.3 (safety-critical)
+2. Plan 11: Add Linux uninstall script + macOS GUI uninstaller (Doc 16 §8)
+3. Plan 11: Implement mnemosyne-engine update-models CLI (Doc 16 §6.3)
+4. Plan 12: Fix workspace merge to use background re-indexing (performance)
+5. Plan 12: Integrate conversation_threads with sessions table (avoid parallel tracking)
+6. Plan 12: Add all missing API routes for new features
+
+
+
+
+
+
+
+
+
+PROMPT::i have 
+
+REQUIRMENTS
+ that i gave u at start explicitly mentioning each and eevrything to do with this project A-Z and not to remove anything but u can add suggestions to make this an insane project, u gave 
+
+IMPLEMENTATION-PLANS
+ in batches, then i asked u to check for merges and in them and fix them in IMPLEMENTATIONS if something is done wrong or is missing from REQUIERMENTS and u did that for implementation plans 00 - 09 and their details are in conflicts.txt, now i want you to cross check for remaining implementations plan one by one as welli have 
+
+REQUIRMENTS
+ that i gave u at start explicitly mentioning each and eevrything to do with this project A-Z and not to remove anything but u can add suggestions to make this an insane project, u gave 
+
+IMPLEMENTATION-PLANS
+ in batches, then i asked u to check for merges and in them and fix them in IMPLEMENTATIONS if something is done wrong or is missing from REQUIERMENTS and u did that for implementation plans 00 - 09 and their details are in conflicts.txt, now i want you to cross check for remaining implementations plan one by one as well
+
+PROMPT
+
+PLAN4 CONFLICTS NEEDED TO RESOLVE
