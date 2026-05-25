@@ -1,0 +1,47 @@
+# ─── Python ───────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+env/
+dist/
+*.spec
+
+# ─── Node / browser extension ─────────────────────────────
+node_modules/
+extension/build/
+extension/.plasmo/
+extension/out/
+extension/keys/
+*.tsbuildinfo
+
+# ─── Mnemosyne runtime data (never commit user memory) ────
+*.db
+*.db-wal
+*.db-shm
+*.sqlite
+data/
+.mnemosyne/
+*.log
+
+# ─── Secrets ──────────────────────────────────────────────
+.env
+.env.*
+*.pem
+*.key
+
+# ─── OS / editor ──────────────────────────────────────────
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# ─── Scratch / local artifacts ────────────────────────────
+Untitled.txt
+*.docx
