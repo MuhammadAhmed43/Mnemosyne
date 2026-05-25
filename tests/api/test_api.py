@@ -12,6 +12,9 @@ from backend.utils.time import now_utc
 
 @pytest.fixture
 def client(tmp_path):
+    # MNEMOSYNE_DATA_DIR isolates each test on every OS; APPDATA alone only works
+    # on Windows, which let cross-test state leak (and break) on Linux CI.
+    os.environ["MNEMOSYNE_DATA_DIR"] = str(tmp_path / "data")
     os.environ["APPDATA"] = str(tmp_path / "appdata")
     from fastapi.testclient import TestClient
 

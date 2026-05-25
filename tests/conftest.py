@@ -10,15 +10,19 @@ import pytest
 
 
 @pytest.fixture(scope="session", autouse=True)
-def _safe_appdata():
-    # Fallback so nothing writes to the real APPDATA even outside `container`.
+def _safe_data_dir():
+    # Fallback so nothing writes to real user data even outside `container`.
+    # MNEMOSYNE_DATA_DIR works on every OS (APPDATA is Windows-only), which is
+    # what keeps tests isolated on Linux CI.
     base = tempfile.mkdtemp(prefix="mnemo_session_")
+    os.environ["MNEMOSYNE_DATA_DIR"] = os.path.join(base, "data")
     os.environ["APPDATA"] = os.path.join(base, "appdata")
     yield
 
 
 @pytest.fixture
 def container(tmp_path):
+    os.environ["MNEMOSYNE_DATA_DIR"] = str(tmp_path / "data")
     os.environ["APPDATA"] = str(tmp_path / "appdata")
     from backend.config import MnemosyneConfig
     from backend.container import ServiceContainer

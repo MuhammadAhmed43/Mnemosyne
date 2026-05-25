@@ -12,7 +12,12 @@ from pydantic import BaseModel
 
 
 def get_data_dir() -> Path:
-    """~/.mnemosyne on macOS/Linux, %APPDATA%\\Mnemosyne on Windows."""
+    """Where Mnemosyne stores everything. `MNEMOSYNE_DATA_DIR` overrides on every
+    platform (used for tests, Docker, and custom locations); otherwise it's
+    %APPDATA%\\Mnemosyne on Windows and ~/.mnemosyne on macOS/Linux."""
+    override = os.environ.get("MNEMOSYNE_DATA_DIR")
+    if override:
+        return Path(override)
     if platform.system() == "Windows":
         base = os.environ.get("APPDATA") or str(Path.home())
         return Path(base) / "Mnemosyne"
