@@ -27,6 +27,10 @@ INFER_THRESHOLD = 0.55  # Doc 10 §8 — at/above this, route to the matched wor
 # existing workspace (similarity < 0.55), give it its own workspace rather than
 # forcing it into a loosely-related one.
 AUTO_CREATE_MAX_SIM = 0.55
+# A URL→workspace pin is only honored for a substantive turn if the content is at
+# least loosely related to the pinned workspace; below this, the user has switched
+# topics within a pinned chat and content-based routing takes over.
+URL_PIN_MIN_SIM = 0.40
 
 # Filler words stripped when naming an auto-created workspace from a message.
 _NAME_STOPWORDS = {
@@ -88,7 +92,15 @@ class WorkspaceService:
         active = self.repo.get_active()
         if not active:
             return NEEDS_NEW_WORKSPACE, 0.0
-        # URL mapping takes priority (Doc 10 §8)
+        combined = f"{user_message} {ai_response}"
+        can_embed = self.embeddings.available
+        # A turn carries real text; a context-injection probe (empty/short hint) does not.
+        meaningful = len(combined.strip()) >= 40
+
+        # URL pin (Doc 10 §8): honor it for context probes and when embeddings are
+        # off. But for a substantive turn, only honor it if the content actually
+        # fits the pinned workspace — one chat is often used for several topics, so
+        # a stale pin must not trap an unrelated new topic (let content decide).
         if tab_url:
             row = self.db.get_global().execute(
                 "SELECT workspace_id FROM platform_mappings WHERE ? LIKE '%' || url_pattern || '%' "
@@ -96,10 +108,20 @@ class WorkspaceService:
                 (tab_url,),
             ).fetchone()
             if row:
-                return row[0], 1.0
-        if not self.embeddings.available:
+                mapped_id = row[0]
+                if not can_embed or not meaningful:
+                    return mapped_id, 1.0
+                mapped = self.repo.get(mapped_id)
+                fit = (
+                    self.embeddings.similarity(combined, mapped.summary_text or f"{mapped.name} {mapped.description}")
+                    if mapped else 0.0
+                )
+                if fit >= URL_PIN_MIN_SIM:
+                    return mapped_id, 1.0
+                # else: stale pin / topic switch -> fall through to content inference
+
+        if not can_embed:
             return NEEDS_NEW_WORKSPACE, 0.0
-        combined = f"{user_message} {ai_response}"
         best_id, best = NEEDS_NEW_WORKSPACE, 0.0
         for ws in active:
             score = self.embeddings.similarity(combined, ws.summary_text or f"{ws.name} {ws.description}")
