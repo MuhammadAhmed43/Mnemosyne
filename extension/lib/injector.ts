@@ -17,6 +17,14 @@ import type { ContextResult, Workspace } from "~lib/types"
 const HOST_ID = "mnemosyne-host"
 const OFFLINE_ID = "mnemosyne-offline"
 const AUTO_INSERT_KEY = "mn_auto_insert"
+
+// Float the bar on document.body as a fixed, top-most, clickable layer. Mounting
+// it inside the page's <main> let host frameworks (notably Gemini's Angular app)
+// overlay it or strip pointer-events, leaving the buttons visible but dead. This
+// decouples it from the page layout entirely — the same approach the toasts use.
+const HOST_STYLE =
+  "position:fixed;top:8px;left:50%;transform:translateX(-50%);" +
+  "z-index:2147483646;pointer-events:auto;max-width:96vw;"
 const NEW_WS_OPTION = "__mn_new_workspace__"  // sentinel value in the workspace dropdown
 
 // Module state survives across re-renders of the bar within one page load.
@@ -90,7 +98,7 @@ function usable(result: CtxResult | null): result is CtxResult {
 export async function injectContext(config: PlatformConfig, hint?: string): Promise<void> {
   const result = await fetchContext(config, { hint })
   if (result?.status === "offline") {
-    showOfflineBanner(config)
+    showOfflineBanner()
     return
   }
   document.getElementById(OFFLINE_ID)?.remove() // engine is back
@@ -103,10 +111,11 @@ export async function injectContext(config: PlatformConfig, hint?: string): Prom
 /** When the engine is down the bar can't render, which previously meant total
  *  silence — users couldn't tell memory had simply stopped. Show a small,
  *  dismissible banner so the failure is visible and actionable. */
-function showOfflineBanner(config: PlatformConfig): void {
+function showOfflineBanner(): void {
   if (offlineDismissed || document.getElementById(OFFLINE_ID)) return
   const host = document.createElement("div")
   host.id = OFFLINE_ID
+  host.style.cssText = HOST_STYLE
   const shadow = host.attachShadow({ mode: "open" })
   shadow.appendChild(styles())
   const wrap = document.createElement("div")
@@ -118,7 +127,7 @@ function showOfflineBanner(config: PlatformConfig): void {
       <button class="mn-x" id="mn-off-x" style="margin-left:auto">✕</button>
     </div>`
   shadow.appendChild(wrap)
-  document.querySelector(config.injectionTarget)?.prepend(host)
+  document.body.appendChild(host)
   shadow.getElementById("mn-off-x")?.addEventListener("click", () => {
     offlineDismissed = true
     host.remove()
@@ -144,6 +153,7 @@ function render(config: PlatformConfig, result: CtxResult): void {
 
   const host = document.createElement("div")
   host.id = HOST_ID
+  host.style.cssText = HOST_STYLE
   const shadow = host.attachShadow({ mode: "open" })
   shadow.appendChild(styles())
 
@@ -163,9 +173,7 @@ function render(config: PlatformConfig, result: CtxResult): void {
     <div class="mn-body" id="mn-body">${escapeHtml(stripWrapper(result.context_string))}</div>
   `
   shadow.appendChild(wrap)
-
-  const target = document.querySelector(config.injectionTarget)
-  target?.prepend(host)
+  document.body.appendChild(host)
 
   void populateWorkspaces(shadow, result.workspace_id, result.workspace_name)
   void initAutoButton(shadow)
