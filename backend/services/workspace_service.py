@@ -77,7 +77,7 @@ class WorkspaceService:
         self.config = config
 
     def create(self, name: str, description: str = "", tags: Optional[list[str]] = None,
-               color: str = "#6366F1", icon: str = "🧠") -> Workspace:
+               color: str = "#3A66D6", icon: str = "") -> Workspace:
         if self.repo.count_active() >= self.config.max_active_workspaces:
             raise ValueError(f"Max active workspaces ({self.config.max_active_workspaces}) reached")
         ws = Workspace(
@@ -183,7 +183,7 @@ class WorkspaceService:
         one. Seeds summary_text with the conversation so future related chats match
         it via embedding inference (and consolidate instead of spawning duplicates)."""
         name = self.suggest_name(user_message, ai_response)
-        ws = self.create(name=name, description=f"Auto-created from a {platform} conversation", icon="✨")
+        ws = self.create(name=name, description=f"Auto-created from a {platform} conversation", icon="")
         summary = f"{user_message} {ai_response}".strip()[:500]
         self.repo.update_fields(ws.id, summary_text=summary)
         ws.summary_text = summary
