@@ -9,9 +9,10 @@ interface Props {
   onEdit?: (id: string) => void
   onBoost?: (id: string) => void
   onDelete?: (id: string) => void
+  onMove?: (id: string) => void
 }
 
-export function MemoryNodeCard({ node, compact, onEdit, onBoost, onDelete }: Props) {
+export function MemoryNodeCard({ node, compact, onEdit, onBoost, onDelete, onMove }: Props) {
   // Idea nodes are auto-captured when the user drills into a concept while
   // brainstorming (vs. stated decisions/facts) — flag them so they're easy to spot.
   const isIdea = node.structured_data?.kind === "idea"
@@ -41,6 +42,7 @@ export function MemoryNodeCard({ node, compact, onEdit, onBoost, onDelete }: Pro
           <div className="hidden gap-2 group-hover:flex">
             {onEdit && <button className="text-xs text-text-secondary hover:text-accent" onClick={() => onEdit(node.id)}>Edit</button>}
             {onBoost && <button className="text-xs text-text-secondary hover:text-accent" onClick={() => onBoost(node.id)}>Boost</button>}
+            {onMove && <button className="text-xs text-text-secondary hover:text-accent" onClick={() => onMove(node.id)}>Move</button>}
             {onDelete && <button className="text-xs text-text-secondary hover:text-danger" onClick={() => onDelete(node.id)}>Delete</button>}
           </div>
         </div>

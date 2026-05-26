@@ -2,7 +2,7 @@ import { useEffect, useState } from "react"
 
 import { MemoryNodeCard } from "~components/MemoryNodeCard"
 import type { MnemosyneAPI } from "~lib/api"
-import type { MemoryNode } from "~lib/types"
+import type { MemoryNode, Workspace } from "~lib/types"
 
 // Order + labels for the quick-filter chip row. Only chips with a non-zero
 // count are shown (plus "All"), so the row stays relevant to this workspace.
@@ -29,6 +29,8 @@ export function MemoryBrowser({ api, workspaceId }: { api: MnemosyneAPI; workspa
   const [counts, setCounts] = useState<Record<string, number>>({})
   const [type, setType] = useState("all")
   const [search, setSearch] = useState("")
+  const [movingId, setMovingId] = useState<string | null>(null)
+  const [otherWs, setOtherWs] = useState<Workspace[]>([])
 
   // Counts are computed server-side (grouped query) so they're accurate no
   // matter how many nodes exist — not a capped client-side tally. They track
@@ -67,6 +69,18 @@ export function MemoryBrowser({ api, workspaceId }: { api: MnemosyneAPI; workspa
     await api.boostNode(workspaceId, id, 0.2)
     loadNodes()
   }
+  const startMove = async (id: string) => {
+    const r = await api.listWorkspaces().catch(() => ({ workspaces: [] }))
+    setOtherWs((r.workspaces ?? []).filter((w) => w.id !== workspaceId))
+    setMovingId(id)
+  }
+  const doMove = async (targetId: string) => {
+    if (!movingId || !targetId) return
+    await api.moveNode(workspaceId, movingId, targetId)
+    setNodes((prev) => prev.filter((n) => n.id !== movingId))
+    setMovingId(null)
+    loadCounts()
+  }
 
   return (
     <div className="max-w-4xl p-8">
@@ -100,9 +114,24 @@ export function MemoryBrowser({ api, workspaceId }: { api: MnemosyneAPI; workspa
       </div>
 
       <div className="space-y-2">
-        {nodes.map((n) => (
-          <MemoryNodeCard key={n.id} node={n} onBoost={boost} onDelete={remove} />
-        ))}
+        {nodes.map((n) =>
+          movingId === n.id ? (
+            <div key={n.id} className="flex items-center gap-2 rounded-lg border border-accent bg-bg-secondary p-3">
+              <span className="text-xs text-text-secondary">Move to:</span>
+              <select
+                defaultValue=""
+                onChange={(e) => doMove(e.target.value)}
+                className="flex-1 rounded border border-border bg-bg-tertiary px-2 py-1 text-xs"
+              >
+                <option value="" disabled>Choose a workspace…</option>
+                {otherWs.map((w) => <option key={w.id} value={w.id}>{w.name}</option>)}
+              </select>
+              <button onClick={() => setMovingId(null)} className="rounded border border-border px-2 py-1 text-xs text-text-secondary">Cancel</button>
+            </div>
+          ) : (
+            <MemoryNodeCard key={n.id} node={n} onBoost={boost} onMove={startMove} onDelete={remove} />
+          ),
+        )}
         {nodes.length === 0 && <p className="p-8 text-center text-sm text-text-secondary">No memories match.</p>}
       </div>
     </div>
