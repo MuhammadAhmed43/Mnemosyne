@@ -378,19 +378,48 @@ async function insertIntoPrompt(
     }
   }
 
-  // contenteditable: attempt a synthetic paste event with a populated
-  // DataTransfer. ProseMirror's paste handler reads event.clipboardData.
+  // contenteditable editors. Different frameworks honor different mechanisms, so
+  // try the two that cover all three platforms, verifying after each.
   if (isEditable(input) && input) {
+    const probe = text.slice(0, 30)
+    const landed = (before: string) =>
+      (input.textContent ?? "").includes(probe) && (input.textContent ?? "") !== before
+
+    // 1) Synthetic paste with a DataTransfer — ProseMirror (ChatGPT, Claude) reads
+    //    event.clipboardData and honors it.
     input.focus()
-    const before = input.textContent ?? ""
+    let before = input.textContent ?? ""
     try {
       const dt = new DataTransfer()
       dt.setData("text/plain", block)
-      const pasteEvent = new ClipboardEvent("paste", { bubbles: true, cancelable: true, clipboardData: dt })
-      input.dispatchEvent(pasteEvent)
+      input.dispatchEvent(new ClipboardEvent("paste", { bubbles: true, cancelable: true, clipboardData: dt }))
       await new Promise((r) => setTimeout(r, 60))
-      if ((input.textContent ?? "").includes(text.slice(0, 30)) && (input.textContent ?? "") !== before) {
+      if (landed(before)) {
         console.log("[Mnemosyne] inserted via synthetic paste event")
+        return "inserted"
+      }
+    } catch {
+      /* try the next mechanism */
+    }
+
+    // 2) execCommand insertText at the caret — Gemini's Quill (and most generic
+    //    contenteditables) honor this even though they ignore synthetic paste.
+    before = input.textContent ?? ""
+    try {
+      input.focus()
+      const sel = window.getSelection()
+      if (sel) {
+        const range = document.createRange()
+        range.selectNodeContents(input)
+        range.collapse(false) // caret at the end
+        sel.removeAllRanges()
+        sel.addRange(range)
+      }
+      document.execCommand("insertText", false, block)
+      input.dispatchEvent(new Event("input", { bubbles: true }))
+      await new Promise((r) => setTimeout(r, 60))
+      if (landed(before)) {
+        console.log("[Mnemosyne] inserted via execCommand insertText")
         return "inserted"
       }
     } catch {
