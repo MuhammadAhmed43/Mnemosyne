@@ -73,22 +73,45 @@ class EmbeddingService:
         vec = next(iter(self._model.embed([text])))  # type: ignore[union-attr]
         return vec.tolist()
 
+    def _coll(self, workspace_id: str) -> str:
+        # Local mode isolates per workspace by directory, so one constant name is
+        # fine. A shared server holds all workspaces, so the name carries the id.
+        return f"ws_{workspace_id}" if self.config.qdrant_url else self.COLLECTION
+
     def _client(self, workspace_id: str):
-        if workspace_id in self._clients:
-            return self._clients[workspace_id]
         from qdrant_client import QdrantClient, models  # noqa: PLC0415
 
         self._ensure_model()  # guarantees self._dim matches the real model
         dim = self._dim or self.config.embedding_dim
-        path = self.config.data_dir / "workspaces" / workspace_id / "vectors"
-        path.mkdir(parents=True, exist_ok=True)
-        client = QdrantClient(path=str(path))
-        if not client.collection_exists(self.COLLECTION):
+        coll = self._coll(workspace_id)
+
+        if self.config.qdrant_url:
+            # Server mode: one shared client; on-disk + int8 quantization are
+            # genuinely honored here, removing the RAM ceiling for huge memory sets.
+            client = self._clients.get("__server__")
+            if client is None:
+                client = QdrantClient(url=self.config.qdrant_url)
+                self._clients["__server__"] = client
+        else:
+            # Local mode (default, no daemon).
+            client = self._clients.get(workspace_id)
+            if client is None:
+                path = self.config.data_dir / "workspaces" / workspace_id / "vectors"
+                path.mkdir(parents=True, exist_ok=True)
+                client = QdrantClient(path=str(path))
+                self._clients[workspace_id] = client
+
+        if not client.collection_exists(coll):
             client.create_collection(
-                self.COLLECTION,
-                vectors_config=models.VectorParams(size=dim, distance=models.Distance.COSINE),
+                coll,
+                # on_disk keeps raw vectors off the heap; int8 scalar quantization
+                # (kept in RAM for fast search) is ~4x smaller than float32. Both are
+                # honored by a Qdrant server; local mode accepts them harmlessly.
+                vectors_config=models.VectorParams(size=dim, distance=models.Distance.COSINE, on_disk=True),
+                quantization_config=models.ScalarQuantization(
+                    scalar=models.ScalarQuantizationConfig(type=models.ScalarType.INT8, always_ram=True)
+                ),
             )
-        self._clients[workspace_id] = client
         return client
 
     def embed_and_store(self, workspace_id: str, node_id: str, text: str, payload: dict) -> Optional[str]:
@@ -100,7 +123,7 @@ class EmbeddingService:
 
         pid = _point_id(node_id)
         self._client(workspace_id).upsert(
-            self.COLLECTION,
+            self._coll(workspace_id),
             points=[models.PointStruct(id=pid, vector=vec, payload={**payload, "node_id": node_id})],
         )
         return pid
@@ -131,7 +154,7 @@ class EmbeddingService:
             return []
         client = self._client(workspace_id)
         res = client.query_points(
-            self.COLLECTION, query=vector, limit=top_k + 1, score_threshold=score_threshold
+            self._coll(workspace_id), query=vector, limit=top_k + 1, score_threshold=score_threshold
         ).points
         out: list[tuple[str, float]] = []
         for p in res:
@@ -158,7 +181,7 @@ class EmbeddingService:
         from qdrant_client import models  # noqa: PLC0415
 
         self._client(workspace_id).delete(
-            self.COLLECTION,
+            self._coll(workspace_id),
             points_selector=models.PointIdsList(points=[_point_id(node_id)]),
         )
 

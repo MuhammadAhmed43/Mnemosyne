@@ -7,6 +7,7 @@ import os
 import platform
 import secrets
 from pathlib import Path
+from typing import Optional
 
 from pydantic import BaseModel
 
@@ -47,6 +48,11 @@ class MnemosyneConfig(BaseModel):
     ollama_model: str = "phi4-mini"  # LLM extraction pass only
     embedding_model: str = "BAAI/bge-small-en-v1.5"  # fastembed, in-process
     embedding_dim: int = 384
+    # Vector store: embedded/local Qdrant by default (zero setup, RAM-bound). Point
+    # this at a Qdrant server (e.g. "http://localhost:6333", or set QDRANT_URL) to
+    # get genuine on-disk + int8-quantized storage that removes the RAM ceiling for
+    # very large memory sets. Optional — local mode needs no daemon.
+    qdrant_url: Optional[str] = None
 
     # Behaviour
     log_level: str = "INFO"
@@ -85,10 +91,12 @@ class MnemosyneConfig(BaseModel):
     @classmethod
     def load(cls) -> "MnemosyneConfig":
         path = get_data_dir() / "config.json"
-        if path.exists():
-            data = json.loads(path.read_text(encoding="utf-8"))
-            return cls(**data)
-        return cls.create_default()
+        cfg = cls(**json.loads(path.read_text(encoding="utf-8"))) if path.exists() else cls.create_default()
+        # Env override: point at a Qdrant server for high-capacity on-disk vectors.
+        env_qdrant = os.environ.get("QDRANT_URL")
+        if env_qdrant:
+            cfg.qdrant_url = env_qdrant
+        return cfg
 
     @classmethod
     def create_default(cls) -> "MnemosyneConfig":
