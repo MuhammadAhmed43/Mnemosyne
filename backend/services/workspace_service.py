@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import re
 import uuid
 from typing import Optional
 from urllib.parse import urlparse
@@ -31,6 +32,23 @@ AUTO_CREATE_MAX_SIM = 0.55
 # least loosely related to the pinned workspace; below this, the user has switched
 # topics within a pinned chat and content-based routing takes over.
 URL_PIN_MIN_SIM = 0.40
+
+# When the user explicitly declares a NEW project ("I want to build an app for X"),
+# only reuse an existing workspace if it's a near-exact match — otherwise it's a
+# new project and deserves its own workspace, even if thematically adjacent.
+NEW_PROJECT_REUSE_SIM = 0.70
+_NEW_PROJECT = re.compile(
+    r"(?:i\s+(?:want|wanna|plan|intend|hope|aim|'?d\s+like)\s+to|i'?m\s+going\s+to|"
+    r"i'?ll|let'?s|we'?re\s+going\s+to|we\s+want\s+to|i'?m\s+(?:building|making|creating|starting))\s+"
+    r"(?:work\s+on|build|make|create|start|develop|launch|design|code|ship|do|begin|plan)?\s*.{0,30}?"
+    r"\b(?:app|application|project|game|tool|platform|web\s?site|website|startup|product|"
+    r"service|bot|extension|saas|system|software|library|prototype|mvp|marketplace|store|shop|engine|model)\b",
+    re.IGNORECASE,
+)
+
+
+def is_new_project_declaration(text: str) -> bool:
+    return bool(_NEW_PROJECT.search(text or ""))
 
 # Filler words stripped when naming an auto-created workspace from a message.
 _NAME_STOPWORDS = {
@@ -96,12 +114,15 @@ class WorkspaceService:
         can_embed = self.embeddings.available
         # A turn carries real text; a context-injection probe (empty/short hint) does not.
         meaningful = len(combined.strip()) >= 40
+        # An explicit "I want to build an app for X" declaration is a strong signal
+        # to start a fresh workspace — it must not be trapped by the chat's pin.
+        new_project = is_new_project_declaration(user_message)
 
         # URL pin (Doc 10 §8): honor it for context probes and when embeddings are
         # off. But for a substantive turn, only honor it if the content actually
         # fits the pinned workspace — one chat is often used for several topics, so
         # a stale pin must not trap an unrelated new topic (let content decide).
-        if tab_url:
+        if tab_url and not new_project:
             row = self.db.get_global().execute(
                 "SELECT workspace_id FROM platform_mappings WHERE ? LIKE '%' || url_pattern || '%' "
                 "ORDER BY priority DESC LIMIT 1",
@@ -127,9 +148,14 @@ class WorkspaceService:
             score = self.embeddings.similarity(combined, ws.summary_text or f"{ws.name} {ws.description}")
             if score > best:
                 best_id, best = ws.id, score
-        # Return the best score even on a miss, so the caller can distinguish a
-        # confident mismatch (low score -> make a new workspace) from a near-miss.
-        return (best_id, best) if best >= INFER_THRESHOLD else (NEEDS_NEW_WORKSPACE, best)
+        # A declared new project only reuses an existing workspace on a near-exact
+        # match; otherwise force a new one (return conf 0.0 so the capture layer's
+        # auto-create fires). A normal turn uses the usual threshold and reports the
+        # real best score so the caller can tell a confident miss from a near-miss.
+        threshold = NEW_PROJECT_REUSE_SIM if new_project else INFER_THRESHOLD
+        if best >= threshold:
+            return best_id, best
+        return NEEDS_NEW_WORKSPACE, (0.0 if new_project else best)
 
     def suggest_name(self, user_message: str, ai_response: str = "") -> str:
         """Derive a short, human workspace name from what the user is asking,

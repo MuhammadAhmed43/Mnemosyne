@@ -26,6 +26,34 @@ def test_url_pin_yields_to_offtopic_content(container):
     assert wsid2 == a.id
 
 
+def test_new_project_declaration_makes_new_workspace(container):
+    from backend.services.workspace_service import is_new_project_declaration
+
+    for msg in (
+        "i want to work on an app for blind people",
+        "i want to make an application for sports good selling",
+        "i want to work on a game called moneydev",
+        "let's build a marketplace for sports gear",
+    ):
+        assert is_new_project_declaration(msg), msg
+    assert not is_new_project_declaration("how does the http keep-alive work")
+
+    svc = container.workspace_service
+    a = svc.create("AI Engineer Prep", "preparing for an AI engineering career, projects")
+    svc.remember_mapping("chatgpt", a.id, "https://chatgpt.com/c/pinned-xyz")
+    container.embedding._available = True
+    # Thematically adjacent (both 'tech projects') but NOT the same project.
+    container.embedding.similarity = lambda x, y: 0.55
+
+    wsid, _ = svc.infer_workspace(
+        "i want to work on an app for blind people",
+        "Here's how an accessibility-focused app for blind users could work …",
+        "https://chatgpt.com/c/pinned-xyz",
+    )
+    # 0.55 < 0.70 reuse bar for a declared new project -> not reused, pin skipped.
+    assert wsid != a.id
+
+
 def test_url_pin_honored_when_content_fits(container):
     svc = container.workspace_service
     a = svc.create("Networking", "http and networking internals")
