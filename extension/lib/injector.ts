@@ -17,6 +17,7 @@ import type { ContextResult, Workspace } from "~lib/types"
 const HOST_ID = "mnemosyne-host"
 const OFFLINE_ID = "mnemosyne-offline"
 const AUTO_INSERT_KEY = "mn_auto_insert"
+const NEW_WS_OPTION = "__mn_new_workspace__"  // sentinel value in the workspace dropdown
 
 // Module state survives across re-renders of the bar within one page load.
 let manualPick = false // user chose a workspace from the dropdown -> stop auto-inferring
@@ -208,9 +209,14 @@ function render(config: PlatformConfig, result: CtxResult): void {
     }
   })
 
-  // Switching workspace: remember the choice for this URL, then reload context.
+  // Switching workspace (or creating a new one): remember the choice for this
+  // URL so the rest of the chat routes there, then reload context.
   shadow.getElementById("mn-ws")?.addEventListener("change", async (e) => {
     const wsId = (e.target as HTMLSelectElement).value
+    if (wsId === NEW_WS_OPTION) {
+      await createWorkspaceFlow(config)
+      return
+    }
     if (!wsId || wsId === currentWsId) return
     manualPick = true
     void chrome.runtime.sendMessage({
@@ -220,6 +226,42 @@ function render(config: PlatformConfig, result: CtxResult): void {
     const next = await fetchContext(config, { workspace_id: wsId })
     if (usable(next)) render(config, next)
   })
+}
+
+/** Create a new workspace from the chat and pin this conversation to it — the
+ *  explicit escape hatch when auto-routing files a turn into the wrong workspace
+ *  (e.g. a tech-career game landing in a tech-career-prep workspace). */
+async function createWorkspaceFlow(config: PlatformConfig): Promise<void> {
+  const input = resolveEditor(config.inputSelector)
+  const suggested = (input ? readInputText(input) : "").split(/\s+/).slice(0, 5).join(" ").slice(0, 40)
+  const name = window.prompt("Name the new workspace (this chat will save into it):", suggested || "New Project")
+  const reRender = async (wsId: string) => {
+    const cur = await fetchContext(config, { workspace_id: wsId })
+    if (usable(cur)) render(config, cur)
+  }
+  if (!name || !name.trim()) {
+    void reRender(currentWsId) // cancelled — reset the dropdown selection
+    return
+  }
+  const created = (await chrome.runtime.sendMessage({
+    type: "CREATE_WORKSPACE",
+    payload: { name: name.trim() },
+  })) as { id?: string; name?: string } | null
+  if (!created?.id) {
+    showToast("Couldn't create workspace", { error: true })
+    void reRender(currentWsId)
+    return
+  }
+  manualPick = true
+  void chrome.runtime.sendMessage({
+    type: "REMEMBER_MAPPING",
+    payload: { platform: config.platformName, workspace_id: created.id, tab_url: location.href },
+  })
+  showToast(`✨ New workspace: ${created.name}`, { sub: "This chat now saves here" })
+  render(config, {
+    workspace_id: created.id, workspace_name: created.name ?? name,
+    context_string: "", nodes_included: [], token_count: 0, freshness_score: 1,
+  } as CtxResult)
 }
 
 /** Fill the workspace dropdown from the engine. Falls back to a single option
@@ -240,6 +282,11 @@ async function populateWorkspaces(shadow: ShadowRoot, currentId: string, current
     if (w.id === currentId) opt.selected = true
     sel.appendChild(opt)
   }
+  // Explicit escape hatch: spin off a dedicated workspace for this chat.
+  const newOpt = document.createElement("option")
+  newOpt.value = NEW_WS_OPTION
+  newOpt.textContent = "➕ New workspace…"
+  sel.appendChild(newOpt)
 }
 
 function refreshPauseButton(shadow: ShadowRoot): void {

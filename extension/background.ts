@@ -169,6 +169,21 @@ async function handleListWorkspaces(): Promise<unknown> {
   }
 }
 
+async function handleCreateWorkspace(payload: { name: string }): Promise<unknown> {
+  try {
+    const token = await getToken()
+    const r = await fetch(`${base}/api/v1/workspaces`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ name: payload.name }),
+      signal: AbortSignal.timeout(8_000),
+    })
+    return await r.json()
+  } catch (e) {
+    return { error: String(e) }
+  }
+}
+
 async function handleRememberMapping(payload: {
   platform: string
   workspace_id: string
@@ -334,6 +349,12 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     handleRememberMapping(msg.payload)
       .then(sendResponse)
       .catch((e) => sendResponse({ remembered: false, reason: String(e) }))
+    return true
+  }
+  if (msg.type === "CREATE_WORKSPACE") {
+    handleCreateWorkspace(msg.payload)
+      .then(sendResponse)
+      .catch((e) => sendResponse({ error: String(e) }))
     return true
   }
   if (msg.type === "GET_STATUS") {
