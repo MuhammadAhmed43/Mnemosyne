@@ -8,9 +8,17 @@ import type { Workspace } from "~lib/types"
 cytoscape.use(cola)
 
 const NODE_COLORS: Record<string, string> = {
-  goal: "#10B981", decision: "#7C3AED", technical_fact: "#6B7280", problem: "#EF4444",
-  entity: "#F59E0B", preference: "#EC4899", task: "#3B82F6", event: "#14B8A6",
-  insight: "#A855F7", user_note: "#22D3EE", open_question: "#F97316",
+  goal: "#34D399", decision: "#818CF8", technical_fact: "#94A3B8", problem: "#FB7185",
+  entity: "#FBBF24", preference: "#F472B6", task: "#60A5FA", event: "#2DD4BF",
+  insight: "#A78BFA", user_note: "#38BDF8", open_question: "#FB923C",
+  hypothesis: "#C084FC", constraint: "#F87171",
+}
+
+const TYPE_LABEL: Record<string, string> = {
+  goal: "Goal", decision: "Decision", technical_fact: "Tech fact", problem: "Problem",
+  entity: "Entity", preference: "Preference", task: "Task", event: "Event",
+  insight: "Insight", user_note: "Note", open_question: "Question",
+  hypothesis: "Hypothesis", constraint: "Constraint",
 }
 
 const ADDABLE_TYPES = ["user_note", "goal", "decision", "task", "problem", "technical_fact", "preference", "insight"]
@@ -31,6 +39,7 @@ export function GraphTab({ api, workspaceId }: { api: MnemosyneAPI; workspaceId:
   const [editText, setEditText] = useState("")
   const [moving, setMoving] = useState(false)
   const [otherWs, setOtherWs] = useState<Workspace[]>([])
+  const [legendTypes, setLegendTypes] = useState<string[]>([])
   const reload = () => { setSelected(null); setEditing(false); setMoving(false); setReloadKey((k) => k + 1) }
 
   useEffect(() => {
@@ -40,30 +49,48 @@ export function GraphTab({ api, workspaceId }: { api: MnemosyneAPI; workspaceId:
       const nodes = data.nodes as unknown as GraphNode[]
       const edges = data.edges as unknown as GraphEdge[]
       setEmpty(nodes.length === 0)
+      setLegendTypes([...new Set(nodes.map((n) => n.type))])
       if (!ref.current || nodes.length === 0) return
       cy = cytoscape({
         container: ref.current,
+        minZoom: 0.25,
+        maxZoom: 2.5,
         elements: [
           ...nodes.map((n) => ({ data: { id: n.id, label: n.label, type: n.type, importance: n.importance } })),
           ...edges.map((e) => ({ data: { id: e.id, source: e.source, target: e.target } })),
         ],
-        layout: { name: "cola", animate: true } as cytoscape.LayoutOptions,
+        // Force-directed layout for structure; importance is encoded via node size.
+        layout: { name: "cola", animate: true, nodeSpacing: 14, edgeLength: 130, avoidOverlap: true, maxSimulationTime: 2500, randomize: false } as cytoscape.LayoutOptions,
         style: [
           {
             selector: "node",
             style: {
               label: "data(label)",
-              "background-color": (el: cytoscape.NodeSingular) => NODE_COLORS[el.data("type")] ?? "#7C3AED",
-              width: (el: cytoscape.NodeSingular) => 20 + el.data("importance") * 30,
-              height: (el: cytoscape.NodeSingular) => 20 + el.data("importance") * 30,
-              "font-size": "9px", color: "#E4E4E7", "text-wrap": "wrap", "text-max-width": "80px",
+              "background-color": (el: cytoscape.NodeSingular) => NODE_COLORS[el.data("type")] ?? "#94A3B8",
+              // Size = importance: the more important the memory, the bigger the dot.
+              width: (el: cytoscape.NodeSingular) => 22 + el.data("importance") * 48,
+              height: (el: cytoscape.NodeSingular) => 22 + el.data("importance") * 48,
+              "font-size": (el: cytoscape.NodeSingular) => `${9 + el.data("importance") * 5}px`,
+              color: "#E6EAF2",
+              "text-valign": "bottom", "text-halign": "center", "text-margin-y": 4,
+              "text-wrap": "wrap", "text-max-width": "120px",
+              // Crisp labels over any background; hidden when zoomed out (declutter).
+              "text-outline-width": 2, "text-outline-color": "#0D1117",
+              "min-zoomed-font-size": 7,
+              "border-width": 1, "border-color": "#0D1117",
             },
           },
-          { selector: "node:selected", style: { "border-width": 3, "border-color": "#fff" } },
+          // Important nodes get a bright halo so they pop at a glance.
+          { selector: "node[importance >= 0.8]", style: { "border-width": 3, "border-color": "#E6EAF2", "border-opacity": 0.9 } },
+          { selector: "node:selected", style: { "border-width": 4, "border-color": "#4D7CFE", "border-opacity": 1 } },
           {
             selector: "edge",
-            style: { width: 1.5, "line-color": "#3A3A4E", "curve-style": "bezier", "target-arrow-shape": "triangle", "target-arrow-color": "#3A3A4E" },
+            style: {
+              width: 1.2, "line-color": "#3B4757", "line-opacity": 0.55, "curve-style": "bezier",
+              "target-arrow-shape": "triangle", "target-arrow-color": "#3B4757", "arrow-scale": 0.8,
+            },
           },
+          { selector: ".mn-faded", style: { opacity: 0.12, "text-opacity": 0.05 } },
         ],
       })
       cy.on("tap", "node", (evt) => {
@@ -71,6 +98,12 @@ export function GraphTab({ api, workspaceId }: { api: MnemosyneAPI; workspaceId:
         setSelected({ id: d.id, label: d.label, type: d.type, importance: d.importance })
       })
       cy.on("tap", (evt) => { if (evt.target === cy) setSelected(null) }) // click background to deselect
+      // Hover a node -> spotlight it + its neighbours, fade the rest (readability).
+      cy.on("mouseover", "node", (evt) => {
+        cy?.elements().addClass("mn-faded")
+        evt.target.closedNeighborhood().removeClass("mn-faded")
+      })
+      cy.on("mouseout", "node", () => cy?.elements().removeClass("mn-faded"))
     })
     return () => cy?.destroy()
   }, [api, workspaceId, reloadKey])
@@ -175,6 +208,26 @@ export function GraphTab({ api, workspaceId }: { api: MnemosyneAPI; workspaceId:
               <button onClick={startMove} className="w-full rounded border border-border py-1 text-xs text-text-secondary hover:text-accent">⇄ Move to another workspace</button>
             </>
           )}
+        </div>
+      )}
+
+      {/* Legend — what the colors and sizes mean. */}
+      {!empty && legendTypes.length > 0 && (
+        <div className="absolute bottom-3 left-3 z-10 rounded-lg border border-border bg-bg-secondary/90 p-2.5 text-[10px] shadow-lg backdrop-blur">
+          <div className="mb-1.5 font-semibold uppercase tracking-wide text-text-secondary">Legend</div>
+          <div className="grid grid-cols-2 gap-x-3 gap-y-1">
+            {legendTypes.map((t) => (
+              <div key={t} className="flex items-center gap-1.5">
+                <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ background: NODE_COLORS[t] ?? "#94A3B8" }} />
+                <span className="text-text-secondary">{TYPE_LABEL[t] ?? t}</span>
+              </div>
+            ))}
+          </div>
+          <div className="mt-1.5 flex items-center gap-1.5 border-t border-border pt-1.5 text-text-tertiary">
+            <span className="inline-block h-1.5 w-1.5 rounded-full bg-text-tertiary" />
+            <span className="inline-block h-3 w-3 rounded-full bg-text-tertiary" />
+            <span>larger = more important</span>
+          </div>
         </div>
       )}
 

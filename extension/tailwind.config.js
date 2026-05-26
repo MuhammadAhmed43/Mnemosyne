@@ -5,17 +5,20 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        bg: { primary: "#0A0A0F", secondary: "#111118", tertiary: "#1A1A24", hover: "#1E1E2E" },
-        border: { DEFAULT: "#2A2A3A", strong: "#3A3A4E" },
-        accent: { DEFAULT: "#7C3AED", hover: "#6D28D9" },
-        text: { primary: "#F0F0F5", secondary: "#8B8BA7", tertiary: "#7A7A92" },
-        success: "#10B981",
-        warning: "#F59E0B",
-        danger: "#EF4444",
-        info: "#3B82F6",
+        // Polished, professional dark theme (slate base + refined royal-blue accent),
+        // tuned so button text and labels clear WCAG AA.
+        bg: { primary: "#0D1117", secondary: "#161B22", tertiary: "#1C232E", hover: "#232E3D" },
+        border: { DEFAULT: "#2A3340", strong: "#3B4757" },
+        accent: { DEFAULT: "#3A66D6", hover: "#2E52B0" },
+        text: { primary: "#E6EAF2", secondary: "#9BA6B8", tertiary: "#7E8A9E" },
+        success: "#34D399",
+        warning: "#F5A623",
+        danger: "#F0506B",
+        info: "#4D7CFE",
         node: {
-          goal: "#10B981", decision: "#7C3AED", task: "#3B82F6", problem: "#EF4444",
-          entity: "#F59E0B", preference: "#EC4899", fact: "#6B7280", event: "#14B8A6",
+          goal: "#34D399", decision: "#818CF8", task: "#60A5FA", problem: "#FB7185",
+          entity: "#FBBF24", preference: "#F472B6", fact: "#94A3B8", event: "#2DD4BF",
+          insight: "#A78BFA", note: "#38BDF8",
         },
       },
       fontFamily: {

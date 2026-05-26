@@ -58,22 +58,24 @@ async function getAutoInsert(): Promise<boolean> {
 function styles(): HTMLStyleElement {
   const s = document.createElement("style")
   s.textContent = `
-    .mn-bar{font-family:Inter,system-ui,sans-serif;background:#111118;color:#F0F0F5;
-      border:1px solid #2A2A3A;border-radius:10px;padding:8px 12px;margin:8px auto;max-width:760px;
-      font-size:13px;display:flex;align-items:center;gap:8px;box-shadow:0 4px 16px rgba(0,0,0,.4)}
-    .mn-meta{color:#8B8BA7}
-    .mn-ws{background:#0A0A0F;color:#F0F0F5;border:1px solid #2A2A3A;border-radius:6px;
-      padding:3px 6px;font-size:12px;max-width:200px;cursor:pointer}
-    .mn-btn{margin-left:auto;background:#7C3AED;color:#fff;border:none;border-radius:6px;
-      padding:6px 10px;cursor:pointer;font-size:12px;min-height:28px}
-    .mn-toggle{margin-left:0!important;background:#2A2A3A!important}
-    .mn-x{background:transparent;color:#A6A6C0;border:none;cursor:pointer;font-size:14px;
-      min-width:28px;min-height:28px;line-height:1;border-radius:6px}
-    .mn-x:hover{color:#F0F0F5}
+    .mn-bar{font-family:Inter,system-ui,sans-serif;background:#161B22;color:#E6EAF2;
+      border:1px solid #2A3340;border-radius:12px;padding:8px 12px;margin:0;max-width:760px;
+      font-size:13px;display:flex;align-items:center;gap:8px;box-shadow:0 8px 28px rgba(0,0,0,.45)}
+    .mn-meta{color:#9BA6B8}
+    .mn-ws{background:#0D1117;color:#E6EAF2;border:1px solid #2A3340;border-radius:7px;
+      padding:4px 7px;font-size:12px;max-width:200px;cursor:pointer}
+    .mn-btn{margin-left:auto;background:#3A66D6;color:#fff;border:none;border-radius:7px;
+      padding:6px 11px;cursor:pointer;font-size:12px;min-height:28px;font-weight:500}
+    .mn-btn:hover{background:#2E52B0}
+    .mn-toggle{margin-left:0!important;background:#232E3D!important;color:#C4CCD8!important}
+    .mn-toggle:hover{background:#2C3A4C!important}
+    .mn-x{background:transparent;color:#9BA6B8;border:none;cursor:pointer;font-size:14px;
+      min-width:28px;min-height:28px;line-height:1;border-radius:7px}
+    .mn-x:hover{color:#E6EAF2;background:#232E3D}
     /* Visible keyboard focus ring (WCAG 2.4.7) — UA defaults are easily lost on dark UI. */
-    .mn-btn:focus-visible,.mn-x:focus-visible,.mn-ws:focus-visible{outline:2px solid #A78BFA;outline-offset:2px}
-    .mn-body{max-width:760px;margin:0 auto;background:#0A0A0F;border:1px solid #2A2A3A;
-      border-radius:8px;padding:10px 12px;white-space:pre-wrap;font-size:12px;color:#C8C8D8;display:none}
+    .mn-btn:focus-visible,.mn-x:focus-visible,.mn-ws:focus-visible{outline:2px solid #6E9BFF;outline-offset:2px}
+    .mn-body{max-width:760px;margin:6px auto 0;background:#0D1117;border:1px solid #2A3340;
+      border-radius:8px;padding:10px 12px;white-space:pre-wrap;font-size:12px;color:#C4CCD8;display:none}
   `
   return s
 }

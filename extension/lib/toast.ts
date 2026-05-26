@@ -14,12 +14,12 @@ function ensureHost(): ShadowRoot {
   style.textContent = `
     .wrap{position:fixed;bottom:18px;right:18px;z-index:2147483647;display:flex;
       flex-direction:column;gap:8px;align-items:flex-end;font-family:Inter,system-ui,sans-serif}
-    .t{background:#111118;color:#F0F0F5;border:1px solid #2A2A3A;border-left:3px solid #7C3AED;
-      border-radius:8px;padding:9px 13px;font-size:13px;box-shadow:0 6px 20px rgba(0,0,0,.45);
+    .t{background:#161B22;color:#E6EAF2;border:1px solid #2A3340;border-left:3px solid #3A66D6;
+      border-radius:10px;padding:9px 13px;font-size:13px;box-shadow:0 8px 24px rgba(0,0,0,.5);
       opacity:0;transform:translateY(8px);transition:opacity .18s,transform .18s;max-width:320px}
     .t.show{opacity:1;transform:translateY(0)}
-    .t.err{border-left-color:#EF4444}
-    .t .sub{color:#8B8BA7;font-size:11px;margin-top:2px}
+    .t.err{border-left-color:#F0506B}
+    .t .sub{color:#9BA6B8;font-size:11px;margin-top:2px}
   `
   shadow.appendChild(style)
   const wrap = document.createElement("div")
