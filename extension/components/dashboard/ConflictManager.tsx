@@ -19,7 +19,7 @@ export function ConflictManager({ api, workspaceId }: { api: MnemosyneAPI; works
   return (
     <div className="max-w-4xl p-8">
       <h1 className="mb-6 text-2xl font-bold">Conflict Manager</h1>
-      {conflicts.length === 0 && <p className="text-sm text-text-secondary">No pending conflicts. 🎉</p>}
+      {conflicts.length === 0 && <p className="text-sm text-text-secondary">No pending conflicts.</p>}
       <div className="space-y-3">
         {conflicts.map((c) => (
           <div key={c.id} className="rounded-lg border border-warning bg-bg-secondary p-4">

@@ -58,9 +58,10 @@ async function getAutoInsert(): Promise<boolean> {
 function styles(): HTMLStyleElement {
   const s = document.createElement("style")
   s.textContent = `
-    .mn-bar{font-family:Inter,system-ui,sans-serif;background:#161B22;color:#E6EAF2;
-      border:1px solid #2A3340;border-radius:12px;padding:8px 12px;margin:0;max-width:760px;
-      font-size:13px;display:flex;align-items:center;gap:8px;box-shadow:0 8px 28px rgba(0,0,0,.45)}
+    .mn-bar{font-family:Inter,system-ui,sans-serif;background:rgba(22,27,34,.72);color:#E6EAF2;
+      border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:8px 12px;margin:0;max-width:760px;
+      font-size:13px;display:flex;align-items:center;gap:8px;box-shadow:0 8px 30px rgba(0,0,0,.5);
+      -webkit-backdrop-filter:blur(14px) saturate(140%);backdrop-filter:blur(14px) saturate(140%)}
     .mn-meta{color:#9BA6B8}
     .mn-ws{background:#0D1117;color:#E6EAF2;border:1px solid #2A3340;border-radius:7px;
       padding:4px 7px;font-size:12px;max-width:200px;cursor:pointer}
@@ -74,8 +75,9 @@ function styles(): HTMLStyleElement {
     .mn-x:hover{color:#E6EAF2;background:#232E3D}
     /* Visible keyboard focus ring (WCAG 2.4.7) — UA defaults are easily lost on dark UI. */
     .mn-btn:focus-visible,.mn-x:focus-visible,.mn-ws:focus-visible{outline:2px solid #6E9BFF;outline-offset:2px}
-    .mn-body{max-width:760px;margin:6px auto 0;background:#0D1117;border:1px solid #2A3340;
-      border-radius:8px;padding:10px 12px;white-space:pre-wrap;font-size:12px;color:#C4CCD8;display:none}
+    .mn-body{max-width:760px;margin:6px auto 0;background:rgba(13,17,23,.72);border:1px solid rgba(255,255,255,.08);
+      border-radius:8px;padding:10px 12px;white-space:pre-wrap;font-size:12px;color:#C4CCD8;display:none;
+      -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
   `
   return s
 }
@@ -126,11 +128,10 @@ function showOfflineBanner(): void {
   shadow.appendChild(styles())
   const wrap = document.createElement("div")
   wrap.innerHTML = `
-    <div class="mn-bar" style="border-color:#EF4444">
-      <span>🧠</span>
-      <span>Mnemosyne engine is offline</span>
+    <div class="mn-bar" style="border-color:rgba(240,80,107,.5)">
+      <span style="font-weight:600">Mnemosyne engine is offline</span>
       <span class="mn-meta">start the local app to capture &amp; recall memory</span>
-      <button class="mn-x" id="mn-off-x" aria-label="Dismiss offline notice" style="margin-left:auto">✕</button>
+      <button class="mn-x" id="mn-off-x" aria-label="Dismiss offline notice" style="margin-left:auto">×</button>
     </div>`
   shadow.appendChild(wrap)
   document.body.appendChild(host)
@@ -150,7 +151,7 @@ async function maybeAutoInsert(config: PlatformConfig, result: CtxResult): Promi
   if (!input || readInputText(input).length > 0) return // don't clobber a draft
   autoInserted = true
   const outcome = await insertIntoPrompt(config, stripWrapper(result.context_string), { auto: true })
-  if (outcome === "inserted") showToast("🧠 Context auto-inserted", { sub: result.workspace_name })
+  if (outcome === "inserted") showToast("Context auto-inserted", { sub: result.workspace_name })
 }
 
 function render(config: PlatformConfig, result: CtxResult): void {
@@ -166,15 +167,14 @@ function render(config: PlatformConfig, result: CtxResult): void {
   const wrap = document.createElement("div")
   wrap.innerHTML = `
     <div class="mn-bar">
-      <span>🧠</span>
-      <span>Mnemosyne</span>
+      <span style="font-weight:600;letter-spacing:.2px">Mnemosyne</span>
       <select class="mn-ws" id="mn-ws" aria-label="Active workspace — switch to use a different memory set" title="Active workspace — switch to use a different memory set"></select>
       <span class="mn-meta">${result.nodes_included.length} items · ${result.token_count} tokens</span>
       <button class="mn-btn mn-toggle" id="mn-auto" aria-label="Toggle auto-insert into new empty chats" title="Auto-insert context into new empty chats">Auto: …</button>
-      <button class="mn-btn mn-toggle" id="mn-pause" aria-label="Pause capturing this conversation" title="Pause capturing this conversation">⏸</button>
+      <button class="mn-btn mn-toggle" id="mn-pause" aria-label="Pause capturing this conversation" title="Pause capturing this conversation">Pause</button>
       <button class="mn-btn" id="mn-insert">Insert into prompt</button>
       <button class="mn-btn mn-toggle" id="mn-toggle" aria-label="Show or hide the injected context">Show</button>
-      <button class="mn-x" id="mn-close" aria-label="Close Mnemosyne bar">✕</button>
+      <button class="mn-x" id="mn-close" aria-label="Close Mnemosyne bar">×</button>
     </div>
     <div class="mn-body" id="mn-body">${escapeHtml(stripWrapper(result.context_string))}</div>
   `
@@ -271,7 +271,7 @@ async function createWorkspaceFlow(config: PlatformConfig): Promise<void> {
     type: "REMEMBER_MAPPING",
     payload: { platform: config.platformName, workspace_id: created.id, tab_url: location.href },
   })
-  showToast(`✨ New workspace: ${created.name}`, { sub: "This chat now saves here" })
+  showToast(`New workspace: ${created.name}`, { sub: "This chat now saves here" })
   render(config, {
     workspace_id: created.id, workspace_name: created.name ?? name,
     context_string: "", nodes_included: [], token_count: 0, freshness_score: 1,
@@ -292,14 +292,14 @@ async function populateWorkspaces(shadow: ShadowRoot, currentId: string, current
   for (const w of list) {
     const opt = document.createElement("option")
     opt.value = w.id ?? ""
-    opt.textContent = `${(w.icon ?? "").trim()} ${w.name ?? ""}`.trim()
+    opt.textContent = (w.name ?? "").trim()
     if (w.id === currentId) opt.selected = true
     sel.appendChild(opt)
   }
   // Explicit escape hatch: spin off a dedicated workspace for this chat.
   const newOpt = document.createElement("option")
   newOpt.value = NEW_WS_OPTION
-  newOpt.textContent = "➕ New workspace…"
+  newOpt.textContent = "New workspace…"
   sel.appendChild(newOpt)
 }
 
@@ -307,7 +307,7 @@ function refreshPauseButton(shadow: ShadowRoot): void {
   const btn = shadow.getElementById("mn-pause")
   if (!btn) return
   const on = isCaptureEnabled()
-  btn.textContent = on ? "⏸" : "▶ paused"
+  btn.textContent = on ? "Pause" : "Paused"
   btn.setAttribute("title", on ? "Pause capturing this conversation" : "Capture paused — click to resume")
   ;(btn as HTMLElement).style.color = on ? "#F0F0F5" : "#F59E0B"
 }

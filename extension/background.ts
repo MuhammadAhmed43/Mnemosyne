@@ -69,9 +69,9 @@ async function connectEvents(): Promise<void> {
         if (n + p === 0) return
         const where = ev.workspace_name ? ` to ${ev.workspace_name}` : ""
         if (n > 0) {
-          toastActiveTab(`🧠 Saved ${n} ${n === 1 ? "memory" : "memories"}${where}`, p > 0 ? `${p} more awaiting review` : undefined)
+          toastActiveTab(`Saved ${n} ${n === 1 ? "memory" : "memories"}${where}`, p > 0 ? `${p} more awaiting review` : undefined)
         } else {
-          toastActiveTab(`📥 ${p} item${p === 1 ? "" : "s"} to review${where}`)
+          toastActiveTab(`${p} item${p === 1 ? "" : "s"} to review${where}`)
         }
       } catch {
         /* ignore malformed event */
@@ -265,7 +265,7 @@ async function handleSaveNote(text: string, tabUrl: string, tabId?: number): Pro
       signal: AbortSignal.timeout(10_000),
     })
     if (!r.ok) throw new Error(`HTTP ${r.status}`)
-    notify("🧠 Saved selection to memory")
+    notify("Saved selection to memory")
   } catch (e) {
     console.warn("[Mnemosyne BG] save note failed:", String(e))
     notify("Couldn't save — is the engine running?", undefined, true)
@@ -305,12 +305,12 @@ chrome.commands.onCommand.addListener(async (command) => {
     const { capture_enabled } = await chrome.storage.local.get("capture_enabled")
     const next = capture_enabled === false // was paused -> resume
     await chrome.storage.local.set({ capture_enabled: next })
-    toastActiveTab(next ? "▶ Capture resumed" : "⏸ Capture paused")
+    toastActiveTab(next ? "Capture resumed" : "Capture paused")
   } else if (command === "toggle-incognito") {
     const { incognito } = await chrome.storage.session.get("incognito")
     const next = !(incognito === true)
     await setIncognito(next)
-    toastActiveTab(next ? "🕶 Incognito ON — nothing is captured" : "Incognito off — capture resumed")
+    toastActiveTab(next ? "Incognito ON — nothing is captured" : "Incognito off — capture resumed")
   } else if (command === "toggle-sidebar") {
     // Chrome has no programmatic "close" for the side panel; opening it from a
     // command counts as a user gesture, so this reliably opens it.

@@ -64,11 +64,11 @@ function SidePanel() {
       </main>
       <CommandPalette
         actions={[
-          { id: "memory", label: "Go to Memory", icon: "🧠", run: () => setTab("memory") },
-          { id: "graph", label: "Go to Graph", icon: "🕸", run: () => setTab("graph") },
-          { id: "audit", label: "Go to Audit", icon: "📋", run: () => setTab("audit") },
-          { id: "search", label: "Go to Search", icon: "🔍", run: () => setTab("search") },
-          { id: "dash", label: "Open Memory Audit dashboard", icon: "📊",
+          { id: "memory", label: "Go to Memory", run: () => setTab("memory") },
+          { id: "graph", label: "Go to Graph", run: () => setTab("graph") },
+          { id: "audit", label: "Go to Audit", run: () => setTab("audit") },
+          { id: "search", label: "Go to Search", run: () => setTab("search") },
+          { id: "dash", label: "Open Memory Audit dashboard",
             run: () => chrome.tabs.create({ url: chrome.runtime.getURL("tabs/dashboard.html") }) },
         ]}
       />

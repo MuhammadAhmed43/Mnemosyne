@@ -23,16 +23,16 @@ export function MemoryNodeCard({ node, compact, onEdit, onBoost, onDelete, onMov
         <NodeTypeBadge type={node.node_type} />
         {isIdea && (
           <span title="Captured from an idea/brainstorming chat" className="rounded-full bg-[#A855F722] px-2 py-0.5 text-[11px] font-medium text-[#C084FC]">
-            💡 Idea
+            Idea
           </span>
         )}
         {isManualNote && (
           <span title="Saved via right-click → Save selection" className="rounded-full bg-[#22D3EE22] px-2 py-0.5 text-[11px] font-medium text-[#22D3EE]">
-            ✎ Saved
+            Saved
           </span>
         )}
         {node.user_verified && <span title="Verified" className="text-success">✓</span>}
-        {node.is_permanent && <span title="Permanent">🔒</span>}
+        {node.is_permanent && <span title="Permanent" className="text-[11px] uppercase tracking-wide text-text-tertiary">Pinned</span>}
         {node.version > 1 && <span className="text-[11px] text-text-tertiary">v{node.version}</span>}
       </div>
       <p className="text-sm text-text-primary">{node.content}</p>

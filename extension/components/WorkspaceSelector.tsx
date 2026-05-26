@@ -20,7 +20,7 @@ export function WorkspaceSelector({ workspaces, active, onChange }: Props) {
       {!active && <option value="">Select a workspace…</option>}
       {workspaces.map((w) => (
         <option key={w.id} value={w.id}>
-          {w.icon} {w.name} ({w.node_count})
+          {w.name} ({w.node_count})
         </option>
       ))}
     </select>

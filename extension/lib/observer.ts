@@ -121,20 +121,20 @@ async function onNewResponse(responseEl: Element, config: PlatformConfig): Promi
       const status = r?.status
       if (status === "queued" || status === "processing") {
         if (r?.workspace_created) {
-          showToast(`🧠 New workspace: ${r.workspace_name ?? "Untitled"}`, { sub: "New topic detected — capturing here" })
+          showToast(`New workspace: ${r.workspace_name ?? "Untitled"}`, { sub: "New topic detected — capturing here" })
         } else {
           // Honest wording: the turn is queued; extraction (which may yield 0, 1,
           // or several memories) runs in the background a moment later.
-          showToast("🧠 Captured — extracting memories…")
+          showToast("Captured — extracting memories…")
         }
       } else if (status === "blocked") {
         showToast("Mnemosyne: skipped (sensitive data detected)", { sub: "Not stored" })
       } else if (status === "buffered" || status === "offline") {
         showToast("Mnemosyne engine offline — buffered locally", { error: true, sub: "Will sync when the app is running" })
       } else if (status === "skipped" && r?.reason === "incognito") {
-        showToast("🕶 Incognito on — this turn was not saved", { sub: "Toggle it off in the toolbar to resume" })
+        showToast("Incognito on — this turn was not saved", { sub: "Toggle it off in the toolbar to resume" })
       } else if (status === "skipped" && r?.reason === "paused") {
-        showToast("⏸ Capture paused — this turn was not saved", { sub: "Resume in the toolbar (or Alt+P)" })
+        showToast("Capture paused — this turn was not saved", { sub: "Resume in the toolbar (or Alt+P)" })
       } else if (status === "skipped") {
         showToast("Mnemosyne: capture skipped", { sub: r?.reason })
       } else if (status === "error") {

@@ -25,10 +25,10 @@ export function PendingReviewCard({ item, onApprove, onReject }: Props) {
       )}
       <div className="flex gap-2">
         <button className="rounded bg-success px-3 py-1 text-xs font-medium text-white" onClick={() => onApprove(item.id)}>
-          ✓ Approve
+          Approve
         </button>
         <button className="rounded border border-border px-3 py-1 text-xs text-text-secondary hover:text-danger" onClick={() => onReject(item.id)}>
-          ✗ Reject
+          Reject
         </button>
       </div>
     </div>

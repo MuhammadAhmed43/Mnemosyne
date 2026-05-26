@@ -14,13 +14,13 @@ import type { Workspace } from "~lib/types"
 import "~style.css"
 
 type PageId = "overview" | "graph" | "memory" | "conflicts" | "sessions" | "settings"
-const NAV: [PageId, string, string][] = [
-  ["overview", "📊", "Overview"],
-  ["graph", "🕸", "Graph"],
-  ["memory", "📝", "Memory"],
-  ["conflicts", "⚡", "Conflicts"],
-  ["sessions", "🎬", "Sessions"],
-  ["settings", "⚙️", "Settings"],
+const NAV: [PageId, string][] = [
+  ["overview", "Overview"],
+  ["graph", "Graph"],
+  ["memory", "Memory"],
+  ["conflicts", "Conflicts"],
+  ["sessions", "Sessions"],
+  ["settings", "Settings"],
 ]
 
 function download(filename: string, content: string, mime: string): void {
@@ -85,8 +85,8 @@ function Dashboard() {
             setRefreshKey((k) => k + 1)
             const n = ev.nodes_committed || 0
             const p = ev.nodes_pending || 0
-            if (n > 0) showToast(`🧠 Saved ${n} ${n === 1 ? "memory" : "memories"}${ev.workspace_name ? ` to ${ev.workspace_name}` : ""}`, p > 0 ? { sub: `${p} awaiting review` } : {})
-            else if (p > 0) showToast(`📥 ${p} item${p === 1 ? "" : "s"} to review${ev.workspace_name ? ` in ${ev.workspace_name}` : ""}`)
+            if (n > 0) showToast(`Saved ${n} ${n === 1 ? "memory" : "memories"}${ev.workspace_name ? ` to ${ev.workspace_name}` : ""}`, p > 0 ? { sub: `${p} awaiting review` } : {})
+            else if (p > 0) showToast(`${p} item${p === 1 ? "" : "s"} to review${ev.workspace_name ? ` in ${ev.workspace_name}` : ""}`)
           } else if (ev.event === "decay_completed") {
             loadWorkspaces()
             setRefreshKey((k) => k + 1)
@@ -136,12 +136,12 @@ function Dashboard() {
   return (
     <div className="flex h-screen bg-bg-primary text-text-primary">
       <aside className="flex w-[220px] flex-col border-r border-border">
-        <header className="border-b border-border p-4 text-lg font-semibold">🧠 Mnemosyne</header>
+        <header className="border-b border-border p-4 text-lg font-semibold">Mnemosyne</header>
         <div className="border-b border-border p-3">
           <WorkspaceSelector workspaces={workspaces} active={active} onChange={setActive} />
         </div>
         <nav className="flex-1 py-2">
-          {NAV.map(([id, icon, label]) => (
+          {NAV.map(([id, label]) => (
             <button
               key={id}
               onClick={() => setPage(id)}
@@ -149,7 +149,7 @@ function Dashboard() {
                 page === id ? "border-r-2 border-accent bg-bg-hover text-accent" : "text-text-secondary hover:bg-bg-hover"
               }`}
             >
-              <span>{icon}</span> {label}
+              {label}
             </button>
           ))}
         </nav>
@@ -168,7 +168,7 @@ function Dashboard() {
             ))}
           </div>
           <label className="block w-full cursor-pointer rounded-lg border border-border bg-bg-secondary py-2 text-center text-xs text-text-secondary hover:text-text-primary">
-            ⬆ Import (JSON)
+            Import (JSON)
             <input type="file" accept="application/json" onChange={importWorkspace} className="hidden" />
           </label>
         </div>

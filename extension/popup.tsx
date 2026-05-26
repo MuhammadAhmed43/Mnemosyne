@@ -78,7 +78,7 @@ function Popup() {
               capture ? "bg-accent text-white" : "border border-warning text-warning"
             }`}
           >
-            {capture ? "🔴 Capture Active — Pause" : "⏸ Capture Paused — Resume"}
+            {capture ? "Capture Active — Pause" : "Capture Paused — Resume"}
           </button>
 
           <button
@@ -87,7 +87,7 @@ function Popup() {
               incognito ? "bg-[#7C3AED] text-white" : "border border-border text-text-secondary hover:text-text-primary"
             }`}
           >
-            {incognito ? "🕶 Incognito ON — nothing is captured" : "🕶 Incognito Mode"}
+            {incognito ? "Incognito ON — nothing is captured" : "Incognito Mode"}
           </button>
 
           <div className="space-y-2">
@@ -97,7 +97,7 @@ function Popup() {
         </>
       )}
 
-      <p className="text-center text-xs text-text-tertiary">🔒 Local only · No data sent</p>
+      <p className="text-center text-xs text-text-tertiary">Local only · No data sent</p>
     </div>
   )
 }

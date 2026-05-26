@@ -3,7 +3,7 @@ import { useEffect, useState } from "react"
 interface Action {
   id: string
   label: string
-  icon: string
+  icon?: string
   run: () => void
 }
 
@@ -54,7 +54,7 @@ export function CommandPalette({ actions }: { actions: Action[] }) {
                 i === selected ? "bg-bg-hover text-accent" : "text-text-primary"
               }`}
             >
-              <span>{a.icon}</span> {a.label}
+              {a.icon && <span>{a.icon}</span>} {a.label}
             </button>
           ))}
         </div>
