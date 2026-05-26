@@ -151,11 +151,11 @@ export function GraphTab({ api, workspaceId }: { api: MnemosyneAPI; workspaceId:
       {/* toolbar */}
       <div className="absolute left-3 top-3 z-10 flex gap-2">
         <button onClick={() => setAdding((v) => !v)} className="rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-white">+ Add memory</button>
-        <button onClick={reload} className="rounded-lg border border-border bg-bg-secondary px-3 py-1.5 text-xs text-text-secondary hover:text-text-primary">↻ Refresh</button>
+        <button onClick={reload} className="rounded-lg border border-border bg-bg-secondary px-3 py-1.5 text-xs text-text-secondary hover:text-text-primary">Refresh</button>
       </div>
 
       {adding && (
-        <div className="absolute left-3 top-12 z-10 w-72 space-y-2 rounded-lg border border-border bg-bg-secondary p-3 shadow-xl">
+        <div className="absolute left-3 top-12 z-10 w-72 space-y-2 rounded-lg border border-border bg-bg-secondary/80 p-3 shadow-xl backdrop-blur-md">
           <select value={addType} onChange={(e) => setAddType(e.target.value)} className="w-full rounded border border-border bg-bg-tertiary px-2 py-1 text-xs">
             {ADDABLE_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
           </select>
@@ -169,7 +169,7 @@ export function GraphTab({ api, workspaceId }: { api: MnemosyneAPI; workspaceId:
 
       {/* node detail drawer */}
       {selected && (
-        <div className="absolute right-3 top-3 z-10 w-72 space-y-2 rounded-lg border border-border bg-bg-secondary p-3 shadow-xl">
+        <div className="absolute right-3 top-3 z-10 w-72 space-y-2 rounded-lg border border-border bg-bg-secondary/80 p-3 shadow-xl backdrop-blur-md">
           <div className="flex items-center justify-between">
             <div className="text-[11px] uppercase text-text-tertiary">{selected.type}</div>
             <button onClick={() => { setSelected(null); setEditing(false) }} className="text-xs text-text-tertiary hover:text-text-primary">✕</button>
@@ -201,11 +201,11 @@ export function GraphTab({ api, workspaceId }: { api: MnemosyneAPI; workspaceId:
               <p className="text-sm text-text-primary">{selected.label}</p>
               <p className="text-xs text-text-secondary">importance {selected.importance.toFixed(2)}</p>
               <div className="flex gap-2 pt-1">
-                <button onClick={startEdit} className="flex-1 rounded border border-border py-1 text-xs hover:text-accent">✎ Edit</button>
-                <button onClick={boost} className="flex-1 rounded border border-border py-1 text-xs hover:text-accent">↑ Boost</button>
+                <button onClick={startEdit} className="flex-1 rounded border border-border py-1 text-xs hover:text-accent">Edit</button>
+                <button onClick={boost} className="flex-1 rounded border border-border py-1 text-xs hover:text-accent">Boost</button>
                 <button onClick={del} className="flex-1 rounded border border-danger py-1 text-xs text-danger hover:bg-danger hover:text-white">Delete</button>
               </div>
-              <button onClick={startMove} className="w-full rounded border border-border py-1 text-xs text-text-secondary hover:text-accent">⇄ Move to another workspace</button>
+              <button onClick={startMove} className="w-full rounded border border-border py-1 text-xs text-text-secondary hover:text-accent">Move to another workspace</button>
             </>
           )}
         </div>

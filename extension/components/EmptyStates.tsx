@@ -10,7 +10,9 @@ interface EmptyProps {
 export function EmptyState({ icon, title, description, children }: EmptyProps) {
   return (
     <div className="flex flex-col items-center justify-center gap-3 p-8 text-center">
-      <div className="text-4xl">{icon}</div>
+      {icon
+        ? <div className="text-3xl text-text-tertiary">{icon}</div>
+        : <div className="h-10 w-10 rounded-full border-2 border-accent/40 bg-accent/10" />}
       <h3 className="text-base font-semibold text-text-primary">{title}</h3>
       <p className="max-w-xs text-sm text-text-secondary">{description}</p>
       {children}
@@ -19,7 +21,7 @@ export function EmptyState({ icon, title, description, children }: EmptyProps) {
 }
 
 export const NoMemories = () => (
-  <EmptyState icon="🧠" title="Your knowledge graph starts here." description="Mnemosyne extracts structure automatically as you talk to your AI." />
+  <EmptyState icon="" title="Your knowledge graph starts here." description="Mnemosyne extracts structure automatically as you talk to your AI." />
 )
 
 export const NothingToReview = () => (

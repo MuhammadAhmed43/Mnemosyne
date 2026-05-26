@@ -25,7 +25,7 @@ function Onboarding() {
 function Welcome({ onNext }: { onNext: () => void }) {
   return (
     <div className="space-y-6 text-center">
-      <div className="text-5xl">🧠</div>
+      <div className="mx-auto h-14 w-14 rounded-2xl border border-accent/40 bg-accent/10" />
       <h1 className="text-3xl font-bold">Mnemosyne</h1>
       <p className="text-lg text-text-secondary">AI that remembers everything you build.</p>
       <div className="border-t border-border" />
