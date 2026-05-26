@@ -28,8 +28,24 @@ NEGATION_MARKERS = re.compile(
 )
 
 
+# Suggestion/listing phrasing — the AI proposing options ("you could use X", "such
+# as", "options include") must not become a committed fact. "We use X" is fine.
+SUGGESTION_MARKERS = re.compile(
+    r"\b(?:you\s+(?:could|can|might|may)\s+(?:use|try|go\s+with|pick|consider)|"
+    r"could\s+use|might\s+use|consider(?:ing)?\s+using|"
+    r"options?\s+(?:include|are)|such\s+as|for\s+example|for\s+instance|e\.g\.|"
+    r"alternatively|popular\s+(?:choices|options|tools)|"
+    r"(?:i'?d\s+)?recommend(?:ed|ation)?|things?\s+like|a\s+(?:few|couple|number)\s+of\s+options)\b",
+    re.IGNORECASE,
+)
+
+
 def is_hypothetical(text: str) -> bool:
     return bool(HYPOTHETICAL_MARKERS.search(text))
+
+
+def is_suggested(text: str, entity: str) -> bool:
+    return _near(text, entity, SUGGESTION_MARKERS)
 
 
 def _near(text: str, entity: str, pattern: re.Pattern[str]) -> bool:
@@ -64,8 +80,9 @@ def filter_hypotheticals(
         value = str(c.structured_data.get("value", ""))
 
         if c.node_type == NodeType.TECHNICAL_FACT:
-            # Tech facts must never come from a negated or hypothetical context.
-            if value and (is_negated(ctx, value) or is_hypothetical_near(ctx, value)):
+            # Tech facts must not come from a negated, hypothetical, or merely
+            # *suggested* context (the AI listing options ≠ the user committing).
+            if value and (is_negated(ctx, value) or is_hypothetical_near(ctx, value) or is_suggested(ctx, value)):
                 continue
         elif is_hypothetical(c.content) or is_hypothetical(c.evidence):
             c.confidence *= 0.3  # soft penalty for non-tech hypotheticals

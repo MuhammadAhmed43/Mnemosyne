@@ -9,6 +9,7 @@ produces routed *candidates*; the service layer commits them.
 
 from __future__ import annotations
 
+import re
 import time
 
 from backend.config import MnemosyneConfig
@@ -27,6 +28,19 @@ from backend.models.capture import CaptureRecord
 from backend.models.extraction import ExtractionResult
 
 TRIVIAL_MIN_CHARS = 50  # Doc 10 §2
+
+# Mnemosyne's own injected context, so it never re-ingests what it just emitted.
+_INJECTED_CONTEXT = re.compile(
+    r"<context>[\s\S]*?</context>"
+    r"|\[System Context\][\s\S]*?\[End Context\]"
+    r"|\[MNEMOSYNE[\s\S]*?(?=\n\s*\n|\Z)"
+    r"|Context from previous sessions:[\s\S]*?(?=\n\s*\n|\Z)",
+    re.IGNORECASE,
+)
+
+
+def _strip_injected_context(text: str) -> str:
+    return _INJECTED_CONTEXT.sub("", text or "").strip()
 
 
 class ExtractionPipeline:
@@ -48,7 +62,8 @@ class ExtractionPipeline:
         llm_enabled: bool = True,
     ) -> ExtractionResult:
         start = time.monotonic()
-        user_msg, ai_msg = capture.user_message, capture.ai_response
+        # Strip our own injected context so it's never captured back as a memory.
+        user_msg, ai_msg = _strip_injected_context(capture.user_message), capture.ai_response
         combined = f"{user_msg}\n{ai_msg}"
 
         def done(reason: str | None = None, **buckets) -> ExtractionResult:
@@ -79,11 +94,8 @@ class ExtractionPipeline:
         # explicitly asked the AI to expand on it — it's not speculation.
         idea_candidates = self.idea.extract(user_msg, ai_msg)
 
-        # Pass 3 — LLM reasoning. Runs on every substantial turn when enabled
-        # (we're already past the trivial gate). `llm.extract()` self-skips
-        # instantly when Ollama isn't running, so this is free for users without
-        # it; for users who have it, it makes extraction phrasing-robust (catches
-        # what brittle rules miss). Rules + NER remain the deterministic floor.
+        # Pass 3 — LLM reasoning, primary when available. Free for users without
+        # Ollama (self-skips); phrasing-robust for those with it.
         llm_candidates = []
         if llm_enabled:
             llm_candidates = await self.llm.extract(user_msg, ai_msg, workspace_summary)

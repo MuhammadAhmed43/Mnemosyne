@@ -102,6 +102,14 @@ CASES: list[dict] = [
         "expect_absent": ["redis"],
     },
     {
+        "name": "AI-suggested options are not committed facts",
+        "user": "what database should the app use?",
+        "ai": "You could use PostgreSQL for relational data, or MongoDB for documents; "
+              "popular options also include Firebase for quick prototypes.",
+        "expect": [],
+        "expect_absent": ["mongodb", "firebase"],
+    },
+    {
         "name": "trivial chatter yields nothing",
         "user": "thanks, that's super helpful!",
         "ai": "You're welcome — glad it helped!",

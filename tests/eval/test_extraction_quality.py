@@ -105,6 +105,17 @@ def evaluate(verbose: bool = False) -> dict:
     return metrics
 
 
+def test_strips_injected_context():
+    from backend.extraction.pipeline import _strip_injected_context
+    msg = (
+        "[MNEMOSYNE — Workspace: E-commerce]\nCurrent Goals:\n• Launch beta\n\n"
+        "help me with the checkout flow"
+    )
+    out = _strip_injected_context(msg)
+    assert "MNEMOSYNE" not in out and "checkout flow" in out
+    assert _strip_injected_context("<context>\nUses Stripe\n</context>\nreal question").strip() == "real question"
+
+
 def test_extraction_recall_meets_threshold():
     m = evaluate()
     assert m["recall"] >= MIN_RECALL, f"recall {m['recall']} < {MIN_RECALL} (matched {m['matched']}/{m['expected_total']})"
