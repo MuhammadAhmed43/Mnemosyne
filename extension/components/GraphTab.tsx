@@ -3,6 +3,7 @@ import cola from "cytoscape-cola"
 import { useEffect, useRef, useState } from "react"
 
 import type { MnemosyneAPI } from "~lib/api"
+import type { Workspace } from "~lib/types"
 
 cytoscape.use(cola)
 
@@ -28,7 +29,9 @@ export function GraphTab({ api, workspaceId }: { api: MnemosyneAPI; workspaceId:
   const [addText, setAddText] = useState("")
   const [editing, setEditing] = useState(false)
   const [editText, setEditText] = useState("")
-  const reload = () => { setSelected(null); setEditing(false); setReloadKey((k) => k + 1) }
+  const [moving, setMoving] = useState(false)
+  const [otherWs, setOtherWs] = useState<Workspace[]>([])
+  const reload = () => { setSelected(null); setEditing(false); setMoving(false); setReloadKey((k) => k + 1) }
 
   useEffect(() => {
     if (!ref.current) return
@@ -99,6 +102,16 @@ export function GraphTab({ api, workspaceId }: { api: MnemosyneAPI; workspaceId:
     await api.updateNode(workspaceId, selected.id, { content: editText.trim() })
     reload()
   }
+  const startMove = async () => {
+    const r = await api.listWorkspaces().catch(() => ({ workspaces: [] }))
+    setOtherWs((r.workspaces ?? []).filter((w) => w.id !== workspaceId))
+    setMoving(true)
+  }
+  const doMove = async (targetId: string) => {
+    if (!selected || !targetId) return
+    await api.moveNode(workspaceId, selected.id, targetId)
+    reload()
+  }
 
   return (
     <div className="relative h-full w-full">
@@ -136,6 +149,20 @@ export function GraphTab({ api, workspaceId }: { api: MnemosyneAPI; workspaceId:
                 <button onClick={() => setEditing(false)} className="rounded border border-border px-3 py-1 text-xs text-text-secondary">Cancel</button>
               </div>
             </>
+          ) : moving ? (
+            <>
+              <p className="text-xs text-text-secondary">Move this memory to:</p>
+              <select
+                defaultValue=""
+                onChange={(e) => doMove(e.target.value)}
+                className="w-full rounded border border-border bg-bg-tertiary px-2 py-1 text-xs"
+              >
+                <option value="" disabled>Choose a workspace…</option>
+                {otherWs.map((w) => <option key={w.id} value={w.id}>{w.name}</option>)}
+              </select>
+              {otherWs.length === 0 && <p className="text-[11px] text-text-tertiary">No other workspaces — create one first.</p>}
+              <button onClick={() => setMoving(false)} className="w-full rounded border border-border py-1 text-xs text-text-secondary">Cancel</button>
+            </>
           ) : (
             <>
               <p className="text-sm text-text-primary">{selected.label}</p>
@@ -145,6 +172,7 @@ export function GraphTab({ api, workspaceId }: { api: MnemosyneAPI; workspaceId:
                 <button onClick={boost} className="flex-1 rounded border border-border py-1 text-xs hover:text-accent">↑ Boost</button>
                 <button onClick={del} className="flex-1 rounded border border-danger py-1 text-xs text-danger hover:bg-danger hover:text-white">Delete</button>
               </div>
+              <button onClick={startMove} className="w-full rounded border border-border py-1 text-xs text-text-secondary hover:text-accent">⇄ Move to another workspace</button>
             </>
           )}
         </div>

@@ -157,6 +157,10 @@ export class MnemosyneAPI {
     return this.req("POST", `/api/v1/workspaces/${ws}/nodes/manual`, body)
   }
 
+  moveNode(ws: string, id: string, targetWorkspaceId: string): Promise<{ moved: boolean; new_node_id?: string }> {
+    return this.req("POST", `/api/v1/workspaces/${ws}/nodes/${id}/move`, { target_workspace_id: targetWorkspaceId })
+  }
+
   exportWorkspace(ws: string): Promise<Record<string, unknown>> {
     return this.req("GET", `/api/v1/workspaces/${ws}/export`)
   }
