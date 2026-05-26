@@ -6,6 +6,7 @@ import logging
 import time
 from dataclasses import dataclass
 from datetime import timedelta
+from typing import Optional
 
 from backend.models.enums import EdgeType, MemoryTier, NodeStatus, NodeType, Platform
 from backend.models.memory_edge import MemoryEdge
@@ -53,11 +54,15 @@ class ConsolidationService:
         edge_repo: EdgeRepository,
         embedding: EmbeddingService,
         audit_repo: AuditRepository,
+        ollama_url: str = "",
+        ollama_model: str = "phi4-mini",
     ):
         self.nodes = node_repo
         self.edges = edge_repo
         self.embeddings = embedding
         self.audit = audit_repo
+        self.ollama_url = ollama_url
+        self.ollama_model = ollama_model
 
     def run_consolidation(self, workspace_id: str) -> ConsolidationResult:
         start = time.monotonic()
@@ -157,13 +162,40 @@ class ConsolidationService:
             summaries += 1
         return summaries
 
+    def _llm_summarize(self, members: list) -> Optional[str]:
+        """Prose summary of a cluster via the local LLM (Ollama). Returns None on
+        any failure so the caller falls back to the deterministic digest. Uses a
+        synchronous client — consolidation runs in a worker thread, not the loop."""
+        if not self.ollama_url:
+            return None
+        import httpx  # noqa: PLC0415
+
+        bullets = "\n".join(f"- [{n.node_type.value}] {n.content.strip()[:200]}" for n in members[:20])
+        prompt = (
+            "These are related memory items from a user's project. Summarize them into "
+            "2-3 concise factual sentences capturing the key facts, decisions, and ideas "
+            "so they can be recalled later. No preamble.\n\n" + bullets
+        )
+        try:
+            with httpx.Client(timeout=45) as client:
+                resp = client.post(
+                    f"{self.ollama_url}/api/generate",
+                    json={"model": self.ollama_model, "prompt": prompt, "stream": False,
+                          "options": {"temperature": 0.2, "num_predict": 300}, "keep_alive": "5m"},
+                )
+                text = (resp.json().get("response") or "").strip()
+                return text or None
+        except Exception:  # noqa: BLE001 — LLM is best-effort; digest is the fallback
+            return None
+
     def _write_summary(self, workspace_id: str, members: list) -> None:
         topic = " ".join(members[0].content.split()[:6])[:60]
+        gist = self._llm_summarize(members) or self._digest(members)
         summary = MemoryNode(
             workspace_id=workspace_id,
             node_type=NodeType.INSIGHT,
             tier=MemoryTier.SEMANTIC,
-            content=f"Summary of {len(members)} archived memories ({topic}…): {self._digest(members)}",
+            content=f"Summary of {len(members)} archived memories ({topic}…): {gist}"[:1800],
             structured_data={"kind": "summary", "summarized_count": len(members), "topic": topic},
             source_platform=Platform.MANUAL,
             extraction_confidence=1.0,

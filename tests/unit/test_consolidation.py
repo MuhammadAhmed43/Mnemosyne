@@ -37,7 +37,9 @@ def test_cold_cluster_summarization(container, workspace):
         (i, 0.8) for i in ids if i != exclude_node_id
     ]
 
-    summarized = container.consolidation_service(ws)._summarize_cold_clusters(ws)
+    cs = container.consolidation_service(ws)
+    cs.ollama_url = ""  # deterministic digest path (no LLM) for a fast, stable test
+    summarized = cs._summarize_cold_clusters(ws)
     assert summarized == 1
 
     # Only the summary remains active; the originals are archived.

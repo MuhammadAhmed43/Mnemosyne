@@ -108,7 +108,10 @@ class ServiceContainer:
         return DecayService(self.node_repo(ws), self.workspace_repo, self.audit_repo)
 
     def consolidation_service(self, ws: str) -> ConsolidationService:
-        return ConsolidationService(self.node_repo(ws), self.edge_repo(ws), self.embedding, self.audit_repo)
+        return ConsolidationService(
+            self.node_repo(ws), self.edge_repo(ws), self.embedding, self.audit_repo,
+            ollama_url=self.config.ollama_url, ollama_model=self.config.ollama_model,
+        )
 
     # ---- Plan 12 extras ---- #
     def thread_repo(self, ws: str) -> "ThreadRepository":
