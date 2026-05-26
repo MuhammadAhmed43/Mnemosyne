@@ -351,6 +351,22 @@ def test_context_renders_insight_and_note_sections():
     assert "Saved Notes" in body and "rotates every 90 days" in body
 
 
+def test_move_node_between_workspaces(client):
+    token = client.get("/pair").json()["token"]
+    h = {"Authorization": f"Bearer {token}"}
+    a = client.post("/api/v1/workspaces", json={"name": "Source"}, headers=h).json()["id"]
+    b = client.post("/api/v1/workspaces", json={"name": "Target"}, headers=h).json()["id"]
+    nid = client.post(f"/api/v1/workspaces/{a}/nodes/manual",
+                      json={"node_type": "decision", "content": "Use PostgreSQL"}, headers=h).json()["id"]
+
+    r = client.post(f"/api/v1/workspaces/{a}/nodes/{nid}/move",
+                    json={"target_workspace_id": b}, headers=h)
+    assert r.status_code == 200 and r.json()["moved"] is True
+
+    assert client.get(f"/api/v1/workspaces/{a}/node-counts", headers=h).json()["total"] == 0
+    assert client.get(f"/api/v1/workspaces/{b}/node-counts", headers=h).json()["counts"].get("decision", 0) == 1
+
+
 def test_ws_events_rejects_bad_token(client):
     import pytest
     with pytest.raises(Exception):  # handshake closed with policy-violation

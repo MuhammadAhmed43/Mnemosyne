@@ -108,6 +108,41 @@ async def boost_node(
     return {"boosted": True, "importance_score": min(1.0, node.importance_score + boost_amount)}
 
 
+@router.post("/workspaces/{workspace_id}/nodes/{node_id}/move")
+async def move_node(
+    workspace_id: str,
+    node_id: str,
+    request: Request,
+    target_workspace_id: str = Body(..., embed=True),
+) -> dict:
+    """Move a node to another workspace. Each workspace is a separate (encrypted)
+    DB + vector collection, so this re-creates the node in the target (re-embedded,
+    re-linked) preserving its verification/importance, then removes it from the
+    source. Used when auto-routing filed a memory in the wrong place."""
+    c = request.app.state.container
+    if workspace_id == target_workspace_id:
+        return {"moved": False, "reason": "same workspace"}
+    node = c.node_repo(workspace_id).get(node_id)
+    if node is None:
+        raise MnemosyneError(NOT_FOUND, "Node not found", {"node_id": node_id})
+    if c.workspace_service.get(target_workspace_id) is None:
+        raise MnemosyneError(NOT_FOUND, "Target workspace not found", {"workspace_id": target_workspace_id})
+
+    new_node = c.graph_service(target_workspace_id).commit_node(
+        target_workspace_id,
+        ExtractionCandidate(node_type=node.node_type, content=node.content,
+                            structured_data=node.structured_data, confidence=node.extraction_confidence,
+                            source_pass="moved", evidence=f"moved from {workspace_id}"),
+        platform=node.source_platform,
+    )
+    c.node_repo(target_workspace_id).update_fields(
+        new_node.id, user_verified=node.user_verified,
+        importance_score=node.importance_score, is_permanent=node.is_permanent,
+    )
+    c.graph_service(workspace_id).hard_delete_node(node_id, workspace_id)
+    return {"moved": True, "new_node_id": new_node.id, "target_workspace_id": target_workspace_id}
+
+
 @router.delete("/workspaces/{workspace_id}/nodes/{node_id}")
 async def delete_node(workspace_id: str, node_id: str, request: Request, hard: bool = Query(default=False)) -> dict:
     graph = request.app.state.container.graph_service(workspace_id)
