@@ -9,6 +9,7 @@ interface Props {
 export function WorkspaceSelector({ workspaces, active, onChange }: Props) {
   return (
     <select
+      aria-label="Active workspace"
       className="w-full rounded-lg border border-border bg-bg-tertiary px-3 py-2 text-sm text-text-primary"
       value={active?.id ?? ""}
       onChange={(e) => {

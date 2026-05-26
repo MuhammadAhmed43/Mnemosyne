@@ -91,6 +91,7 @@ export function MemoryBrowser({ api, workspaceId }: { api: MnemosyneAPI; workspa
         onChange={(e) => setSearch(e.target.value)}
         onKeyDown={(e) => e.key === "Enter" && runSearch()}
         placeholder="Search… (press Enter)"
+        aria-label="Search memories"
         className="mb-4 w-full rounded-lg border border-border bg-bg-tertiary px-3 py-2 text-sm"
       />
 

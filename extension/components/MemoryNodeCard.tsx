@@ -39,11 +39,13 @@ export function MemoryNodeCard({ node, compact, onEdit, onBoost, onDelete, onMov
       {!compact && (
         <div className="mt-2 flex items-center justify-between">
           <ConfidenceBar value={node.extraction_confidence} />
-          <div className="hidden gap-2 group-hover:flex">
-            {onEdit && <button className="text-xs text-text-secondary hover:text-accent" onClick={() => onEdit(node.id)}>Edit</button>}
-            {onBoost && <button className="text-xs text-text-secondary hover:text-accent" onClick={() => onBoost(node.id)}>Boost</button>}
-            {onMove && <button className="text-xs text-text-secondary hover:text-accent" onClick={() => onMove(node.id)}>Move</button>}
-            {onDelete && <button className="text-xs text-text-secondary hover:text-danger" onClick={() => onDelete(node.id)}>Delete</button>}
+          {/* opacity (not display:none) keeps actions in the tab order; revealed on
+              hover OR keyboard focus so they're reachable without a mouse. */}
+          <div className="flex gap-3 opacity-0 transition-opacity focus-within:opacity-100 group-hover:opacity-100">
+            {onEdit && <button aria-label="Edit memory" className="text-xs text-text-secondary hover:text-accent" onClick={() => onEdit(node.id)}>Edit</button>}
+            {onBoost && <button aria-label="Boost importance" className="text-xs text-text-secondary hover:text-accent" onClick={() => onBoost(node.id)}>Boost</button>}
+            {onMove && <button aria-label="Move to another workspace" className="text-xs text-text-secondary hover:text-accent" onClick={() => onMove(node.id)}>Move</button>}
+            {onDelete && <button aria-label="Delete memory" className="text-xs text-text-secondary hover:text-danger" onClick={() => onDelete(node.id)}>Delete</button>}
           </div>
         </div>
       )}

@@ -65,9 +65,13 @@ function styles(): HTMLStyleElement {
     .mn-ws{background:#0A0A0F;color:#F0F0F5;border:1px solid #2A2A3A;border-radius:6px;
       padding:3px 6px;font-size:12px;max-width:200px;cursor:pointer}
     .mn-btn{margin-left:auto;background:#7C3AED;color:#fff;border:none;border-radius:6px;
-      padding:4px 10px;cursor:pointer;font-size:12px}
+      padding:6px 10px;cursor:pointer;font-size:12px;min-height:28px}
     .mn-toggle{margin-left:0!important;background:#2A2A3A!important}
-    .mn-x{background:transparent;color:#8B8BA7;border:none;cursor:pointer;font-size:14px}
+    .mn-x{background:transparent;color:#A6A6C0;border:none;cursor:pointer;font-size:14px;
+      min-width:28px;min-height:28px;line-height:1;border-radius:6px}
+    .mn-x:hover{color:#F0F0F5}
+    /* Visible keyboard focus ring (WCAG 2.4.7) — UA defaults are easily lost on dark UI. */
+    .mn-btn:focus-visible,.mn-x:focus-visible,.mn-ws:focus-visible{outline:2px solid #A78BFA;outline-offset:2px}
     .mn-body{max-width:760px;margin:0 auto;background:#0A0A0F;border:1px solid #2A2A3A;
       border-radius:8px;padding:10px 12px;white-space:pre-wrap;font-size:12px;color:#C8C8D8;display:none}
   `
@@ -124,7 +128,7 @@ function showOfflineBanner(): void {
       <span>🧠</span>
       <span>Mnemosyne engine is offline</span>
       <span class="mn-meta">start the local app to capture &amp; recall memory</span>
-      <button class="mn-x" id="mn-off-x" style="margin-left:auto">✕</button>
+      <button class="mn-x" id="mn-off-x" aria-label="Dismiss offline notice" style="margin-left:auto">✕</button>
     </div>`
   shadow.appendChild(wrap)
   document.body.appendChild(host)
@@ -162,13 +166,13 @@ function render(config: PlatformConfig, result: CtxResult): void {
     <div class="mn-bar">
       <span>🧠</span>
       <span>Mnemosyne</span>
-      <select class="mn-ws" id="mn-ws" title="Active workspace — switch to use a different memory set"></select>
+      <select class="mn-ws" id="mn-ws" aria-label="Active workspace — switch to use a different memory set" title="Active workspace — switch to use a different memory set"></select>
       <span class="mn-meta">${result.nodes_included.length} items · ${result.token_count} tokens</span>
-      <button class="mn-btn mn-toggle" id="mn-auto" title="Auto-insert context into new empty chats">Auto: …</button>
-      <button class="mn-btn mn-toggle" id="mn-pause" title="Pause capturing this conversation">⏸</button>
+      <button class="mn-btn mn-toggle" id="mn-auto" aria-label="Toggle auto-insert into new empty chats" title="Auto-insert context into new empty chats">Auto: …</button>
+      <button class="mn-btn mn-toggle" id="mn-pause" aria-label="Pause capturing this conversation" title="Pause capturing this conversation">⏸</button>
       <button class="mn-btn" id="mn-insert">Insert into prompt</button>
-      <button class="mn-btn mn-toggle" id="mn-toggle">Show</button>
-      <button class="mn-x" id="mn-close">✕</button>
+      <button class="mn-btn mn-toggle" id="mn-toggle" aria-label="Show or hide the injected context">Show</button>
+      <button class="mn-x" id="mn-close" aria-label="Close Mnemosyne bar">✕</button>
     </div>
     <div class="mn-body" id="mn-body">${escapeHtml(stripWrapper(result.context_string))}</div>
   `

@@ -24,6 +24,9 @@ function ensureHost(): ShadowRoot {
   shadow.appendChild(style)
   const wrap = document.createElement("div")
   wrap.className = "wrap"
+  // Announce toasts to screen readers (e.g. "Saved 3 memories"). WCAG 4.1.3.
+  wrap.setAttribute("role", "status")
+  wrap.setAttribute("aria-live", "polite")
   shadow.appendChild(wrap)
   document.body.appendChild(host)
   return shadow
