@@ -103,7 +103,9 @@ class CaptureService:
         record = CaptureRecord(
             session_id=req.session_id, platform=req.platform,
             user_message=req.user_message, ai_response=req.ai_response,
-            workspace_id=workspace_id, timestamp=req.timestamp, metadata=req.metadata,
+            workspace_id=workspace_id, tab_url=req.tab_url,
+            workspace_autocreated=created_ws is not None,
+            timestamp=req.timestamp, metadata=req.metadata,
         )
         return CaptureResult(
             capture_id=record.id, status=CaptureStatus.QUEUED,

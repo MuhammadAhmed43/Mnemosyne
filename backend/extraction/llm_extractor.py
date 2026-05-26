@@ -93,6 +93,38 @@ class LLMExtractor:
             logger.warning("LLM extraction failed: %s", type(e).__name__)
             return []
 
+    async def route_workspace(self, user_msg: str, ai_msg: str, workspaces: list[dict]) -> dict:
+        """Decide which workspace a turn belongs to, or that it's a new project.
+        Returns {"match_id": str, "new_name": str, "confidence": float}; {} on failure
+        so the caller falls back to embedding/rule routing."""
+        if not await self.is_available():
+            return {}
+        ws_lines = "\n".join(
+            f'- id={w["id"]} name="{w["name"]}": {(w.get("summary") or "")[:160]}' for w in workspaces[:30]
+        ) or "(no workspaces yet)"
+        prompt = (
+            "You route a conversation turn to the right PROJECT workspace.\n\n"
+            f"Existing workspaces:\n{ws_lines}\n\n"
+            f"New turn:\nUSER: {user_msg[:1500]}\nAI: {ai_msg[:1500]}\n\n"
+            "Choose an existing workspace ONLY if this turn is clearly about that SAME "
+            "project/topic. A different or brand-new project (even if also technical) must "
+            "be NEW. Reply ONLY JSON:\n"
+            '{"match_id": "<existing id, or empty>", "new_name": "<2-4 word Title Case name if new, else empty>", "confidence": 0.0}'
+        )
+        try:
+            async with httpx.AsyncClient(timeout=60) as client:
+                resp = await client.post(
+                    f"{self.ollama_url}/api/generate",
+                    json={"model": self.model, "prompt": prompt, "stream": False, "format": "json",
+                          "keep_alive": "15m", "options": {"temperature": 0.0, "num_predict": 120}},
+                )
+            cleaned = re.sub(r"```(?:json)?|```", "", resp.json().get("response", "")).strip()
+            data = json.loads(cleaned)
+            return data if isinstance(data, dict) else {}
+        except Exception as e:  # noqa: BLE001
+            logger.warning("LLM routing failed: %s", type(e).__name__)
+            return {}
+
     def _parse(self, raw: str) -> list[ExtractionCandidate]:
         try:
             cleaned = re.sub(r"```(?:json)?|```", "", raw).strip()

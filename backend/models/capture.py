@@ -41,7 +41,9 @@ class CaptureRecord(BaseModel):
     platform: Platform
     user_message: str
     ai_response: str
-    workspace_id: str
+    workspace_id: str  # provisional routing; the worker may re-route via the LLM
+    tab_url: str = ""
+    workspace_autocreated: bool = False  # ingest created this ws as a fallback
     status: CaptureStatus = CaptureStatus.QUEUED
     timestamp: datetime
     retry_count: int = 0

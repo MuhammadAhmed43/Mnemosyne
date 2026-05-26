@@ -19,9 +19,10 @@ PENDING_TTL_DAYS = 7
 MAX_RETRIES = 3
 
 
-def _commit_results(container: ServiceContainer, record: CaptureRecord, result) -> dict:
-    """Sync: commit auto candidates, detect/resolve conflicts, queue pending."""
-    ws = record.workspace_id
+def _commit_results(container: ServiceContainer, record: CaptureRecord, result, ws: str) -> dict:
+    """Sync: commit auto candidates into workspace `ws`, detect/resolve conflicts,
+    queue pending. `ws` is the LLM-resolved workspace (may differ from the
+    provisional one on the record)."""
     graph = container.graph_service(ws)
     conflict = container.conflict_service(ws)
     conflict_repo = container.conflict_repo(ws)
@@ -66,15 +67,57 @@ def _commit_results(container: ServiceContainer, record: CaptureRecord, result) 
     return {"committed": committed, "pending": pending_added}
 
 
+async def _resolve_workspace(container: ServiceContainer, record: CaptureRecord, settings) -> str:
+    """Authoritative routing: the LLM is primary (reasons over the turn + existing
+    workspaces), the provisional embedding/rule routing on the record is the
+    fallback when the LLM is unavailable or declines."""
+    provisional = record.workspace_id
+    if not settings.llm_extraction_enabled:
+        return provisional
+    llm = container.pipeline.llm
+    if not await llm.is_available():
+        return provisional
+    active = container.workspace_service.list(status="active")
+    decision = await llm.route_workspace(
+        record.user_message, record.ai_response,
+        [{"id": w.id, "name": w.name, "summary": (w.summary_text or w.description or "")} for w in active],
+    )
+    ids = {w.id for w in active}
+    match = (decision.get("match_id") or "").strip()
+    new_name = (decision.get("new_name") or "").strip()
+    chosen = provisional
+    if match in ids:
+        chosen = match
+    elif new_name:
+        try:
+            ws = container.workspace_service.create(
+                name=new_name[:40], description=f"Auto-created from a {record.platform.value} conversation", icon="✨")
+            container.workspace_repo.update_fields(
+                ws.id, summary_text=f"{record.user_message} {record.ai_response}".strip()[:500])
+            chosen = ws.id
+        except Exception:  # noqa: BLE001 — e.g. max workspaces reached
+            chosen = provisional
+    # If we routed away from a workspace ingest auto-created (now empty), drop it.
+    if chosen != provisional and record.workspace_autocreated:
+        try:
+            if container.node_repo(provisional).count(provisional) == 0:
+                container.workspace_service.delete(provisional)
+        except Exception:  # noqa: BLE001
+            pass
+    if record.tab_url and chosen:
+        try:
+            container.workspace_service.remember_mapping(record.platform.value, chosen, record.tab_url)
+        except Exception:  # noqa: BLE001
+            pass
+    return chosen
+
+
 async def extraction_worker(container: ServiceContainer, queue: DiskBackedQueue) -> None:
     while True:
         record = await queue.get()
         try:
-            ws = container.workspace_service.get(record.workspace_id)
-            summary = ws.summary_text if ws else ""
-            # Read live routing thresholds from user settings so the Settings
-            # sliders actually govern auto-commit vs pending (they used to be
-            # hardcoded in the scorer and ignored).
+            prov = container.workspace_service.get(record.workspace_id)
+            summary = prov.summary_text if prov else ""
             settings = container.settings_repo.get_user_settings()
             result = await container.pipeline.run(
                 record,
@@ -84,12 +127,15 @@ async def extraction_worker(container: ServiceContainer, queue: DiskBackedQueue)
                 min_confidence=settings.min_confidence,
                 llm_enabled=settings.llm_extraction_enabled,
             )
-            stats = await asyncio.to_thread(_commit_results, container, record, result)
+            # LLM is the primary router; embedding/rule provisional is the fallback.
+            ws_id = await _resolve_workspace(container, record, settings)
+            stats = await asyncio.to_thread(_commit_results, container, record, result, ws_id)
             queue.mark_complete(record.id)
+            final = container.workspace_service.get(ws_id)
             await container.events.put({
                 "event": "extraction_completed",
-                "workspace_id": record.workspace_id,
-                "workspace_name": ws.name if ws else "",
+                "workspace_id": ws_id,
+                "workspace_name": final.name if final else "",
                 "nodes_committed": stats["committed"], "nodes_pending": stats["pending"],
             })
         except Exception as e:  # noqa: BLE001
