@@ -7,6 +7,7 @@ from typing import Optional
 from fastapi import APIRouter, Body, Depends, Query, Request
 
 from backend.errors import NOT_FOUND, WORKSPACE_FULL, MnemosyneError
+from backend.models.extraction import ExtractionCandidate
 from backend.models.workspace import Workspace
 from backend.security.auth import verify_token
 
@@ -47,6 +48,68 @@ async def create_workspace(
         return request.app.state.container.workspace_service.create(name, description, tags, color, icon)
     except ValueError as e:
         raise MnemosyneError(WORKSPACE_FULL, str(e)) from e
+
+
+def _move_all_nodes(c, src: str, dst: str) -> int:
+    """Re-home every active node from src workspace into dst (re-embedded, deduped
+    by commit_node), preserving verification/importance. Returns count moved."""
+    moved = 0
+    for node in c.node_repo(src).get_active(src, limit=10000):
+        new_node = c.graph_service(dst).commit_node(
+            dst,
+            ExtractionCandidate(
+                node_type=node.node_type, content=node.content,
+                structured_data=node.structured_data, confidence=node.extraction_confidence,
+                source_pass="merged", evidence=f"merged from {src}",
+            ),
+            platform=node.source_platform,
+        )
+        c.node_repo(dst).update_fields(
+            new_node.id, user_verified=node.user_verified,
+            importance_score=node.importance_score, is_permanent=node.is_permanent,
+        )
+        moved += 1
+    return moved
+
+
+@router.post("/workspaces/cleanup")
+async def cleanup_workspaces(
+    request: Request,
+    merge_duplicates: bool = Body(default=True),
+    delete_empty: bool = Body(default=True),
+) -> dict:
+    """Tidy up the artifacts of earlier routing bugs: merge same-named duplicate
+    workspaces (keep the one with the most memories, move the rest in) and delete
+    workspaces that have no memories. Returns a report of exactly what changed."""
+    c = request.app.state.container
+    report: dict = {"merged": [], "deleted_empty": []}
+    active = c.workspace_service.list(status="active")
+    counts = {w.id: c.node_repo(w.id).count(w.id) for w in active}
+
+    if merge_duplicates:
+        groups: dict[str, list] = {}
+        for w in active:
+            groups.setdefault(w.name.strip().lower(), []).append(w)
+        for group in groups.values():
+            if len(group) < 2:
+                continue
+            canonical = max(group, key=lambda w: counts.get(w.id, 0))
+            for w in group:
+                if w.id == canonical.id:
+                    continue
+                moved = _move_all_nodes(c, w.id, canonical.id)
+                c.workspace_service.delete(w.id)
+                report["merged"].append({"from": w.name, "into_id": canonical.id, "moved": moved})
+        active = c.workspace_service.list(status="active")
+        counts = {w.id: c.node_repo(w.id).count(w.id) for w in active}
+
+    if delete_empty:
+        for w in active:
+            if counts.get(w.id, 0) == 0:
+                c.workspace_service.delete(w.id)
+                report["deleted_empty"].append(w.name)
+
+    return report
 
 
 @router.get("/workspaces/{workspace_id}", response_model=Workspace)
