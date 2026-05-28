@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Mnemosyne | Conflict Manager</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&amp;family=JetBrains+Mono&amp;family=Geist:wght@600;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-secondary": "#313030",
+                        "error": "#ffb4ab",
+                        "background": "#121317",
+                        "on-background": "#e3e2e7",
+                        "tertiary": "#c8c6c5",
+                        "secondary-fixed-dim": "#c9c6c5",
+                        "surface-container-low": "#1a1b1f",
+                        "on-error-container": "#ffdad6",
+                        "on-secondary-fixed": "#1c1b1b",
+                        "on-secondary-fixed-variant": "#474646",
+                        "on-surface": "#e3e2e7",
+                        "tertiary-container": "#686767",
+                        "surface-container-highest": "#343539",
+                        "error-container": "#93000a",
+                        "outline": "#918f9f",
+                        "on-tertiary-container": "#e9e6e6",
+                        "surface-bright": "#38393d",
+                        "surface": "#121317",
+                        "on-primary-container": "#e7e4ff",
+                        "inverse-surface": "#e3e2e7",
+                        "surface-container-high": "#292a2e",
+                        "on-secondary-container": "#bab8b7",
+                        "outline-variant": "#464554",
+                        "on-primary-fixed": "#0c006a",
+                        "on-tertiary": "#313030",
+                        "secondary": "#c9c6c5",
+                        "on-primary-fixed-variant": "#3631b4",
+                        "secondary-container": "#4a4949",
+                        "primary": "#c2c1ff",
+                        "surface-dim": "#121317",
+                        "on-tertiary-fixed": "#1c1b1b",
+                        "primary-fixed": "#e2dfff",
+                        "primary-container": "#5856d6",
+                        "surface-container-lowest": "#0d0e12",
+                        "on-error": "#690005",
+                        "inverse-primary": "#4f4ccd",
+                        "on-primary": "#1c0b9f",
+                        "surface-tint": "#c2c1ff",
+                        "surface-container": "#1e1f23",
+                        "tertiary-fixed-dim": "#c8c6c5",
+                        "secondary-fixed": "#e5e2e1",
+                        "inverse-on-surface": "#2f3034",
+                        "on-tertiary-fixed-variant": "#474746",
+                        "on-surface-variant": "#c7c4d6",
+                        "primary-fixed-dim": "#c2c1ff",
+                        "surface-variant": "#343539",
+                        "tertiary-fixed": "#e5e2e1"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "md": "16px",
+                        "xl": "40px",
+                        "margin": "16px",
+                        "lg": "24px",
+                        "sm": "8px",
+                        "base": "4px",
+                        "xs": "4px",
+                        "gutter": "12px"
+                    },
+                    "fontFamily": {
+                        "body-sm": ["Inter"],
+                        "code-md": ["JetBrains Mono"],
+                        "headline-md": ["Geist"],
+                        "headline-lg": ["Geist"],
+                        "label-caps": ["Inter"],
+                        "body-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "body-sm": ["12px", {"lineHeight": "16px", "letterSpacing": "0", "fontWeight": "400"}],
+                        "code-md": ["13px", {"lineHeight": "18px", "letterSpacing": "0", "fontWeight": "400"}],
+                        "headline-md": ["18px", {"lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                        "headline-lg": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                        "label-caps": ["10px", {"lineHeight": "12px", "letterSpacing": "0.05em", "fontWeight": "700"}],
+                        "body-md": ["14px", {"lineHeight": "20px", "letterSpacing": "-0.01em", "fontWeight": "400"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: #0d0e12; }
+        ::-webkit-scrollbar-thumb { background: #262626; border-radius: 2px; }
+    </style>
+</head>
+<body class="bg-surface-container-lowest text-on-surface font-body-md overflow-hidden flex h-screen">
+<!-- SideNavBar Shell -->
+<aside class="hidden md:flex flex-col h-full w-60 left-0 bg-surface-container-lowest border-r border-outline-variant py-md space-y-base">
+<div class="px-md mb-lg">
+<div class="flex items-center gap-sm">
+<div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-on-primary text-[20px]" style="font-variation-settings: 'FILL' 1;">terminal</span>
+</div>
+<div>
+<h1 class="font-headline-md text-headline-md font-black text-on-surface">Mnemosyne</h1>
+<p class="font-label-caps text-label-caps text-on-surface-variant opacity-70">AI Persistent State</p>
+</div>
+</div>
+</div>
+<nav class="flex-1 space-y-xs">
+<a class="text-on-surface-variant flex items-center px-md py-sm hover:bg-surface-container-highest/50 text-on-surface transition-all hover:translate-x-1 duration-200" href="#">
+<span class="material-symbols-outlined mr-sm text-[18px]">terminal</span>
+<span class="font-label-caps text-label-caps">Threads</span>
+</a>
+<a class="bg-secondary-container/30 text-primary border-r-2 border-primary flex items-center px-md py-sm hover:bg-surface-container-highest/50 transition-all hover:translate-x-1 duration-200" href="#">
+<span class="material-symbols-outlined mr-sm text-[18px]" style="font-variation-settings: 'FILL' 1;">memory</span>
+<span class="font-label-caps text-label-caps">Memory Banks</span>
+</a>
+<a class="text-on-surface-variant flex items-center px-md py-sm hover:bg-surface-container-highest/50 text-on-surface transition-all hover:translate-x-1 duration-200" href="#">
+<span class="material-symbols-outlined mr-sm text-[18px]">insights</span>
+<span class="font-label-caps text-label-caps">Analytics</span>
+</a>
+<a class="text-on-surface-variant flex items-center px-md py-sm hover:bg-surface-container-highest/50 text-on-surface transition-all hover:translate-x-1 duration-200" href="#">
+<span class="material-symbols-outlined mr-sm text-[18px]">token</span>
+<span class="font-label-caps text-label-caps">Workspace</span>
+</a>
+</nav>
+<div class="px-md py-sm">
+<button class="w-full bg-primary text-on-primary py-sm rounded font-label-caps text-label-caps hover:opacity-90 transition-opacity flex items-center justify-center gap-xs">
+<span class="material-symbols-outlined text-[16px]">add</span>
+                New Thread
+            </button>
+</div>
+<footer class="mt-auto space-y-xs">
+<a class="text-on-surface-variant flex items-center px-md py-sm hover:bg-surface-container-highest/50 transition-all hover:translate-x-1 duration-200" href="#">
+<span class="material-symbols-outlined mr-sm text-[18px]">description</span>
+<span class="font-label-caps text-label-caps">Docs</span>
+</a>
+<a class="text-on-surface-variant flex items-center px-md py-sm hover:bg-surface-container-highest/50 transition-all hover:translate-x-1 duration-200" href="#">
+<span class="material-symbols-outlined mr-sm text-[18px]">cloud_done</span>
+<span class="font-label-caps text-label-caps">Status</span>
+</a>
+</footer>
+</aside>
+<!-- Main Workspace -->
+<main class="flex-1 flex flex-col min-w-0 bg-surface">
+<!-- TopNavBar Shell -->
+<header class="flex justify-between items-center w-full px-md h-12 bg-surface/80 backdrop-blur-xl border-b border-outline-variant z-50">
+<div class="flex items-center gap-md">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">account_tree</span>
+<h2 class="font-headline-md text-headline-md font-bold text-on-surface tracking-tight">Conflict Manager</h2>
+</div>
+<div class="flex items-center gap-sm">
+<div class="flex items-center gap-xs px-sm py-1 bg-surface-container-high rounded border border-outline-variant">
+<span class="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
+<span class="font-label-caps text-label-caps text-primary">Engine running</span>
+</div>
+<button class="w-8 h-8 flex items-center justify-center rounded hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined text-[20px]">notifications</span>
+</button>
+<button class="w-8 h-8 flex items-center justify-center rounded hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined text-[20px]">settings</span>
+</button>
+<img alt="User avatar" class="w-6 h-6 rounded-full border border-outline-variant ml-xs" data-alt="A professional high-fidelity headshot of a software engineer in a dark tech-focused environment. Soft purple rim lighting accents their silhouette against a background of blurred terminal text and server rack lights. The aesthetic is modern, clean, and utilitarian, matching a dark mode engineering interface." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB_PjaY_ZWaW0PNTyFKqYDsob3yWHx5-i_AD_4t7f-u7c5S23aAn5jOGGWKfG-mFdTkvoBO0kicO5fe-Phl_Psce2_vR0yn5Snck3YZe4kzpMN4oE8ivsNydJnC3i_AGG5BQ8rc9H4wBCQXVJulR76_0_2jcBFHM60pBe2NnrJJkC_SBy1vA-fQJpz1c_yTi4uhELqoIDWqcITa_jJwnrlXR0aFc8UahalJZDquK61aZgmMHEQVQYTqYEH7H3bCVsLRNikUH34UZDQ"/>
+</div>
+</header>
+<!-- Content Area -->
+<section class="flex-1 overflow-y-auto px-lg py-lg max-w-4xl mx-auto w-full">
+<div class="mb-lg flex justify-between items-end">
+<div>
+<h3 class="font-headline-lg text-headline-lg text-on-surface">Memory Arbitration</h3>
+<p class="text-on-surface-variant font-body-sm max-w-md">The engine has identified logical contradictions within the active memory bank. Resolve these state conflicts to maintain system coherence.</p>
+</div>
+<div class="text-right">
+<span class="font-label-caps text-label-caps text-on-surface-variant block mb-1">Queue Status</span>
+<span class="font-code-md text-code-md text-primary bg-primary/10 px-sm py-0.5 rounded border border-primary/20">3 Pending</span>
+</div>
+</div>
+<!-- Conflict Card List -->
+<div class="space-y-md">
+<!-- Card 1 -->
+<div class="bg-surface-container-low border-l-2 border-primary group hover:border-l-4 transition-all duration-150">
+<div class="p-md flex justify-between items-start border-b border-outline-variant/30">
+<div class="flex items-center gap-sm">
+<span class="font-label-caps text-label-caps px-sm py-1 bg-primary/10 text-primary border border-primary/20">FACT_COLLISION</span>
+<span class="font-code-md text-code-md text-on-surface-variant">0x98FF... ↔ 0x24C1...</span>
+</div>
+<div class="flex items-center gap-xs">
+<span class="font-label-caps text-label-caps text-on-surface-variant">CONTRADICTION SCORE</span>
+<span class="font-code-md text-code-md text-error">87%</span>
+</div>
+</div>
+<div class="p-md grid grid-cols-1 md:grid-cols-2 gap-md bg-surface-container-lowest/50">
+<div class="space-y-sm">
+<div class="flex items-center justify-between">
+<span class="font-label-caps text-label-caps opacity-50">STATE A</span>
+<span class="font-body-sm text-body-sm text-primary opacity-60">Source: Thread_42</span>
+</div>
+<div class="bg-surface-container-high p-sm rounded border border-outline-variant/50">
+<p class="font-body-md text-body-md text-on-surface">User preferred language set to <span class="text-primary font-bold">Rust</span> for all backend logic modules.</p>
+</div>
+</div>
+<div class="space-y-sm">
+<div class="flex items-center justify-between">
+<span class="font-label-caps text-label-caps opacity-50">STATE B</span>
+<span class="font-body-sm text-body-sm text-on-secondary-container opacity-60">Source: Session_Context</span>
+</div>
+<div class="bg-surface-container-high p-sm rounded border border-outline-variant/50">
+<p class="font-body-md text-body-md text-on-surface">User requested <span class="text-secondary font-bold">Go</span> implementation for the new microservice architecture.</p>
+</div>
+</div>
+</div>
+<div class="p-sm flex justify-end gap-sm bg-surface-container-low">
+<button class="px-md py-1.5 font-label-caps text-label-caps border border-outline-variant hover:bg-surface-container-highest transition-colors">Both valid</button>
+<button class="px-md py-1.5 font-label-caps text-label-caps bg-surface-container-highest text-on-surface border border-outline-variant hover:border-primary transition-colors">Keep B</button>
+<button class="px-md py-1.5 font-label-caps text-label-caps bg-primary-container text-on-primary-container hover:opacity-90 transition-opacity">Keep A</button>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="bg-surface-container-low border-l-2 border-secondary group hover:border-l-4 transition-all duration-150">
+<div class="p-md flex justify-between items-start border-b border-outline-variant/30">
+<div class="flex items-center gap-sm">
+<span class="font-label-caps text-label-caps px-sm py-1 bg-secondary/10 text-secondary border border-secondary/20">LOGIC_BRANCH</span>
+<span class="font-code-md text-code-md text-on-surface-variant">0xA42E... ↔ 0xF901...</span>
+</div>
+<div class="flex items-center gap-xs">
+<span class="font-label-caps text-label-caps text-on-surface-variant">CONTRADICTION SCORE</span>
+<span class="font-code-md text-code-md text-secondary">62%</span>
+</div>
+</div>
+<div class="p-md grid grid-cols-1 md:grid-cols-2 gap-md bg-surface-container-lowest/50">
+<div class="space-y-sm">
+<div class="font-label-caps text-label-caps opacity-50">STATE A</div>
+<div class="bg-surface-container-high p-sm rounded border border-outline-variant/50">
+<p class="font-body-md text-body-md text-on-surface">API Endpoint security: <span class="text-primary">JWT Auth only</span>.</p>
+</div>
+</div>
+<div class="space-y-sm">
+<div class="font-label-caps text-label-caps opacity-50">STATE B</div>
+<div class="bg-surface-container-high p-sm rounded border border-outline-variant/50">
+<p class="font-body-md text-body-md text-on-surface">API Endpoint security: <span class="text-secondary">OAuth2 with Scopes</span>.</p>
+</div>
+</div>
+</div>
+<div class="p-sm flex justify-end gap-sm">
+<button class="px-md py-1.5 font-label-caps text-label-caps border border-outline-variant hover:bg-surface-container-highest transition-colors">Both valid</button>
+<button class="px-md py-1.5 font-label-caps text-label-caps bg-surface-container-highest text-on-surface border border-outline-variant hover:border-primary transition-colors">Keep B</button>
+<button class="px-md py-1.5 font-label-caps text-label-caps bg-primary-container text-on-primary-container hover:opacity-90 transition-opacity">Keep A</button>
+</div>
+</div>
+<!-- Empty State (Hidden by default for this view) -->
+<div class="hidden flex-col items-center justify-center py-xl bg-surface-container-low border border-dashed border-outline-variant rounded">
+<span class="material-symbols-outlined text-[48px] text-outline-variant mb-md">task_alt</span>
+<h4 class="font-headline-md text-headline-md text-on-surface-variant">No pending conflicts.</h4>
+<p class="font-body-sm text-body-sm text-outline">State is currently coherent across all active threads.</p>
+</div>
+</div>
+</section>
+</main>
+<!-- Contextual Inspect Panel -->
+<aside class="hidden lg:flex flex-col w-[320px] bg-surface-container-low border-l border-outline-variant">
+<div class="p-md border-b border-outline-variant">
+<h3 class="font-label-caps text-label-caps text-on-surface-variant">Inference Metadata</h3>
+</div>
+<div class="flex-1 overflow-y-auto p-md space-y-lg">
+<div class="space-y-sm">
+<span class="font-label-caps text-label-caps opacity-40">SYSTEM HEALTH</span>
+<div class="h-1.5 w-full bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[92%]"></div>
+</div>
+<div class="flex justify-between font-code-md text-[10px]">
+<span>COHERENCE: 92%</span>
+<span>ENTROPY: 0.04</span>
+</div>
+</div>
+<div class="space-y-md">
+<span class="font-label-caps text-label-caps opacity-40">ACTIVE MEMORY VISUALIZATION</span>
+<div class="aspect-square bg-surface-container-lowest border border-outline-variant relative overflow-hidden flex items-center justify-center group">
+<div class="absolute inset-0 opacity-20 pointer-events-none bg-[radial-gradient(circle_at_50%_50%,#5856d6_0%,transparent_70%)]"></div>
+<!-- Mock Data Visualization -->
+<div class="w-full h-full p-md grid grid-cols-6 grid-rows-6 gap-1">
+<div class="bg-primary/20 border border-primary/40"></div>
+<div class="bg-surface-container-highest border border-outline-variant"></div>
+<div class="bg-surface-container-highest border border-outline-variant"></div>
+<div class="bg-error/20 border border-error/40"></div>
+<div class="bg-surface-container-highest border border-outline-variant"></div>
+<div class="bg-primary/20 border border-primary/40"></div>
+<div class="bg-surface-container-highest border border-outline-variant"></div>
+<div class="bg-primary border border-primary"></div>
+<div class="bg-surface-container-highest border border-outline-variant"></div>
+<div class="bg-surface-container-highest border border-outline-variant"></div>
+<div class="bg-surface-container-highest border border-outline-variant"></div>
+<div class="bg-surface-container-highest border border-outline-variant"></div>
+<div class="bg-surface-container-highest border border-outline-variant"></div>
+<div class="bg-surface-container-highest border border-outline-variant"></div>
+<div class="bg-primary/20 border border-primary/40"></div>
+<div class="bg-secondary border border-secondary"></div>
+<div class="bg-surface-container-highest border border-outline-variant"></div>
+<div class="bg-surface-container-highest border border-outline-variant"></div>
+<div class="bg-error border border-error animate-pulse"></div>
+<div class="bg-surface-container-highest border border-outline-variant"></div>
+<div class="bg-surface-container-highest border border-outline-variant"></div>
+<div class="bg-surface-container-highest border border-outline-variant"></div>
+<div class="bg-primary border border-primary"></div>
+<div class="bg-surface-container-highest border border-outline-variant"></div>
+<div class="bg-surface-container-highest border border-outline-variant"></div>
+<div class="bg-surface-container-highest border border-outline-variant"></div>
+<div class="bg-surface-container-highest border border-outline-variant"></div>
+<div class="bg-surface-container-highest border border-outline-variant"></div>
+<div class="bg-surface-container-highest border border-outline-variant"></div>
+<div class="bg-surface-container-highest border border-outline-variant"></div>
+<div class="bg-primary/20 border border-primary/40"></div>
+<div class="bg-surface-container-highest border border-outline-variant"></div>
+<div class="bg-surface-container-highest border border-outline-variant"></div>
+<div class="bg-surface-container-highest border border-outline-variant"></div>
+<div class="bg-surface-container-highest border border-outline-variant"></div>
+<div class="bg-primary/20 border border-primary/40"></div>
+</div>
+<div class="absolute bottom-2 left-2 right-2 bg-background/80 backdrop-blur px-sm py-1 border border-outline-variant text-[9px] font-code-md">
+                        MAPPED_NODES: 3,142 | ACTIVE_CONTRADICTIONS: 2
+                    </div>
+</div>
+</div>
+<div class="space-y-sm">
+<span class="font-label-caps text-label-caps opacity-40">RESOLUTION HISTORY</span>
+<div class="space-y-xs">
+<div class="flex items-center gap-xs text-body-sm font-body-sm">
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+<span class="text-on-surface">Auto-resolved conflict #0421</span>
+<span class="ml-auto opacity-30">2m ago</span>
+</div>
+<div class="flex items-center gap-xs text-body-sm font-body-sm opacity-60">
+<span class="w-1.5 h-1.5 rounded-full bg-on-surface-variant"></span>
+<span>User prioritized State A in #0419</span>
+<span class="ml-auto opacity-30">14m ago</span>
+</div>
+</div>
+</div>
+</div>
+<div class="p-md bg-surface-container-highest/20 border-t border-outline-variant">
+<button class="w-full flex items-center justify-center gap-sm px-md py-sm border border-outline-variant font-label-caps text-label-caps hover:bg-surface-container-highest transition-colors">
+<span class="material-symbols-outlined text-[16px]">download</span>
+                Export State Snapshot
+            </button>
+</div>
+</aside>
+<script>
+        // Simple micro-interaction for buttons
+        document.querySelectorAll('button').forEach(btn => {
+            btn.addEventListener('mousedown', () => {
+                btn.style.transform = 'scale(0.98)';
+                btn.style.opacity = '0.8';
+            });
+            btn.addEventListener('mouseup', () => {
+                btn.style.transform = 'scale(1)';
+                btn.style.opacity = '1';
+            });
+            btn.addEventListener('mouseleave', () => {
+                btn.style.transform = 'scale(1)';
+                btn.style.opacity = '1';
+            });
+        });
+
+        // Toggle cards on resolution (fake interaction)
+        document.querySelectorAll('.flex-1 .bg-surface-container-low button').forEach(btn => {
+            if (btn.innerText !== "Both valid") {
+                btn.addEventListener('click', (e) => {
+                    const card = e.target.closest('.bg-surface-container-low');
+                    card.style.transition = 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
+                    card.style.opacity = '0';
+                    card.style.transform = 'translateX(20px)';
+                    setTimeout(() => {
+                        card.remove();
+                        const remaining = document.querySelectorAll('.bg-surface-container-low').length;
+                        if (remaining === 0) {
+                            document.querySelector('.hidden.flex-col').classList.remove('hidden');
+                        }
+                    }, 300);
+                });
+            }
+        });
+    </script>
+</body></html>
