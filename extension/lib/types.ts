@@ -107,3 +107,34 @@ export interface Conflict {
   status: string
   suggested_strategy: string
 }
+
+export interface ProfileItem {
+  id: string
+  content: string
+  kind: string
+  source: string
+  pinned: number
+  created_at: string
+  updated_at: string
+}
+
+export interface BriefItem {
+  id: string
+  type: string
+  content: string
+  importance: number
+  rationale?: string | null
+  status?: string | null
+}
+
+export interface BriefSection {
+  title: string
+  items: BriefItem[]
+}
+
+export interface Brief {
+  workspace_id: string
+  total: number
+  sections: BriefSection[]
+  recent: { id: string; type: string; content: string; version: number; at: string }[]
+}
