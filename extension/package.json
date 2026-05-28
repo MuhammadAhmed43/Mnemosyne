@@ -12,12 +12,19 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@fontsource/geist-sans": "^5.2.5",
+    "@fontsource/inter": "^5.2.8",
+    "@fontsource/jetbrains-mono": "^5.2.8",
+    "cytoscape": "3.30.2",
+    "cytoscape-cola": "2.5.1",
+    "material-symbols": "^0.27.2",
     "plasmo": "0.88.0",
     "react": "18.3.1",
     "react-dom": "18.3.1",
-    "zustand": "4.5.5",
-    "cytoscape": "3.30.2",
-    "cytoscape-cola": "2.5.1"
+    "react-force-graph-3d": "^1.29.1",
+    "three": "^0.184.0",
+    "three-spritetext": "^1.10.0",
+    "zustand": "4.5.5"
   },
   "devDependencies": {
     "@types/chrome": "0.0.270",
@@ -25,6 +32,7 @@
     "@types/node": "20.14.0",
     "@types/react": "18.3.3",
     "@types/react-dom": "18.3.0",
+    "@types/three": "^0.184.1",
     "autoprefixer": "10.4.19",
     "postcss": "8.4.39",
     "tailwindcss": "3.4.6",
@@ -33,7 +41,16 @@
   },
   "manifest": {
     "name": "Mnemosyne Memory",
-    "permissions": ["storage", "activeTab", "scripting", "sidePanel", "notifications", "clipboardWrite", "contextMenus", "alarms"],
+    "permissions": [
+      "storage",
+      "activeTab",
+      "scripting",
+      "sidePanel",
+      "notifications",
+      "clipboardWrite",
+      "contextMenus",
+      "alarms"
+    ],
     "host_permissions": [
       "https://claude.ai/*",
       "https://chat.openai.com/*",
@@ -44,19 +61,27 @@
     ],
     "commands": {
       "_execute_action": {
-        "suggested_key": { "default": "Alt+W" },
+        "suggested_key": {
+          "default": "Alt+W"
+        },
         "description": "Open Mnemosyne (workspace switcher & controls)"
       },
       "toggle-sidebar": {
-        "suggested_key": { "default": "Alt+M" },
+        "suggested_key": {
+          "default": "Alt+M"
+        },
         "description": "Toggle the Mnemosyne sidebar"
       },
       "toggle-capture": {
-        "suggested_key": { "default": "Alt+P" },
+        "suggested_key": {
+          "default": "Alt+P"
+        },
         "description": "Pause / resume capture"
       },
       "toggle-incognito": {
-        "suggested_key": { "default": "Alt+I" },
+        "suggested_key": {
+          "default": "Alt+I"
+        },
         "description": "Toggle incognito mode"
       }
     }
