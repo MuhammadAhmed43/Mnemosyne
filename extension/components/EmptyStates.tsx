@@ -9,29 +9,31 @@ interface EmptyProps {
 
 export function EmptyState({ icon, title, description, children }: EmptyProps) {
   return (
-    <div className="flex flex-col items-center justify-center gap-3 p-8 text-center">
-      {icon
-        ? <div className="text-3xl text-text-tertiary">{icon}</div>
-        : <div className="h-10 w-10 rounded-full border-2 border-accent/40 bg-accent/10" />}
-      <h3 className="text-base font-semibold text-text-primary">{title}</h3>
-      <p className="max-w-xs text-sm text-text-secondary">{description}</p>
+    <div className="flex flex-col items-center justify-center gap-md p-xl text-center">
+      <div className="flex h-16 w-16 items-center justify-center rounded-full border-2 border-dashed border-outline-variant">
+        <span className="material-symbols-outlined text-[32px] text-outline-variant">{icon || "memory"}</span>
+      </div>
+      <h3 className="font-headline-md text-headline-md text-on-surface">{title}</h3>
+      <p className="max-w-xs font-body-sm text-body-sm text-on-surface-variant">{description}</p>
       {children}
     </div>
   )
 }
 
 export const NoMemories = () => (
-  <EmptyState icon="" title="Your knowledge graph starts here." description="Mnemosyne extracts structure automatically as you talk to your AI." />
+  <EmptyState icon="hub" title="Your knowledge graph starts here." description="Mnemosyne extracts structure automatically as you talk to your AI." />
 )
 
 export const NothingToReview = () => (
-  <EmptyState icon="✓" title="Nothing to review" description="Everything extracted so far was high-confidence and committed automatically." />
+  <EmptyState icon="task_alt" title="Nothing to review" description="Everything extracted so far was high-confidence and committed automatically." />
 )
 
 export const EngineOffline = ({ onRestart }: { onRestart?: () => void }) => (
-  <EmptyState icon="⚠" title="Mnemosyne engine is not running." description="Your browser still works normally. No capture or injection is active.">
+  <EmptyState icon="cloud_off" title="Mnemosyne engine is not running." description="Your browser still works normally. No capture or injection is active.">
     {onRestart && (
-      <button className="rounded-lg bg-accent px-4 py-2 text-sm text-white" onClick={onRestart}>
+      <button
+        className="rounded bg-primary px-md py-sm font-label-caps text-label-caps uppercase text-on-primary transition-opacity hover:opacity-90"
+        onClick={onRestart}>
         Restart Engine
       </button>
     )}
