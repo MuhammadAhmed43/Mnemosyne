@@ -94,17 +94,19 @@ class ExtractionPipeline:
         # explicitly asked the AI to expand on it — it's not speculation.
         idea_candidates = self.idea.extract(user_msg, ai_msg)
 
-        # Pass 3 — LLM reasoning, primary when available. Free for users without
-        # Ollama (self-skips); phrasing-robust for those with it.
+        # Pass 3 — LLM reasoning. This is the PRIMARY extractor when available: it
+        # reads the whole turn and pulls rich, structured memory (stack + rationale
+        # + use-cases + code), which the regex rules can't. The rules/NER are kept
+        # only as a fallback for when Ollama is down.
         llm_candidates = []
         if llm_enabled:
             llm_candidates = await self.llm.extract(user_msg, ai_msg, workspace_summary)
 
-        # Filter hypotheticals/negations (against the full turn), then re-add the
-        # idea candidates, merge + score, route.
-        all_candidates = filter_hypotheticals(
-            rule_candidates + ner_candidates + llm_candidates, source_text=combined
-        ) + idea_candidates
+        # LLM-primary: when the model produced anything, trust it (+ idea pass) and
+        # drop the shallow rule/NER "Uses X" tags that diluted memory with basics.
+        # Only fall back to rules/NER when the LLM yielded nothing (offline/declined).
+        primary = llm_candidates if llm_candidates else (rule_candidates + ner_candidates)
+        all_candidates = filter_hypotheticals(primary, source_text=combined) + idea_candidates
         merged = self.scorer.merge_candidates(all_candidates, min_confidence=min_confidence)
         routed = self.scorer.route_candidates(
             merged, auto_commit_threshold=auto_commit_threshold, min_confidence=min_confidence
