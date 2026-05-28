@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&amp;family=JetBrains+Mono&amp;family=Geist:wght@600;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-secondary": "#313030",
+                    "error": "#ffb4ab",
+                    "background": "#121317",
+                    "on-background": "#e3e2e7",
+                    "tertiary": "#c8c6c5",
+                    "secondary-fixed-dim": "#c9c6c5",
+                    "surface-container-low": "#1a1b1f",
+                    "on-error-container": "#ffdad6",
+                    "on-secondary-fixed": "#1c1b1b",
+                    "on-secondary-fixed-variant": "#474646",
+                    "on-surface": "#e3e2e7",
+                    "tertiary-container": "#686767",
+                    "surface-container-highest": "#343539",
+                    "error-container": "#93000a",
+                    "outline": "#918f9f",
+                    "on-tertiary-container": "#e9e6e6",
+                    "surface-bright": "#38393d",
+                    "surface": "#121317",
+                    "on-primary-container": "#e7e4ff",
+                    "inverse-surface": "#e3e2e7",
+                    "surface-container-high": "#292a2e",
+                    "on-secondary-container": "#bab8b7",
+                    "outline-variant": "#464554",
+                    "on-primary-fixed": "#0c006a",
+                    "on-tertiary": "#313030",
+                    "secondary": "#c9c6c5",
+                    "on-primary-fixed-variant": "#3631b4",
+                    "secondary-container": "#4a4949",
+                    "primary": "#c2c1ff",
+                    "surface-dim": "#121317",
+                    "on-tertiary-fixed": "#1c1b1b",
+                    "primary-fixed": "#e2dfff",
+                    "primary-container": "#5856d6",
+                    "surface-container-lowest": "#0d0e12",
+                    "on-error": "#690005",
+                    "inverse-primary": "#4f4ccd",
+                    "on-primary": "#1c0b9f",
+                    "surface-tint": "#c2c1ff",
+                    "surface-container": "#1e1f23",
+                    "tertiary-fixed-dim": "#c8c6c5",
+                    "secondary-fixed": "#e5e2e1",
+                    "inverse-on-surface": "#2f3034",
+                    "on-tertiary-fixed-variant": "#474746",
+                    "on-surface-variant": "#c7c4d6",
+                    "primary-fixed-dim": "#c2c1ff",
+                    "surface-variant": "#343539",
+                    "tertiary-fixed": "#e5e2e1"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "spacing": {
+                    "md": "16px",
+                    "xl": "40px",
+                    "margin": "16px",
+                    "lg": "24px",
+                    "sm": "8px",
+                    "base": "4px",
+                    "xs": "4px",
+                    "gutter": "12px"
+            },
+            "fontFamily": {
+                    "body-sm": ["Inter"],
+                    "code-md": ["JetBrains Mono"],
+                    "headline-md": ["Geist"],
+                    "headline-lg": ["Geist"],
+                    "label-caps": ["Inter"],
+                    "body-md": ["Inter"]
+            },
+            "fontSize": {
+                    "body-sm": ["12px", {"lineHeight": "16px", "letterSpacing": "0", "fontWeight": "400"}],
+                    "code-md": ["13px", {"lineHeight": "18px", "letterSpacing": "0", "fontWeight": "400"}],
+                    "headline-md": ["18px", {"lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                    "headline-lg": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                    "label-caps": ["10px", {"lineHeight": "12px", "letterSpacing": "0.05em", "fontWeight": "700"}],
+                    "body-md": ["14px", {"lineHeight": "20px", "letterSpacing": "-0.01em", "fontWeight": "400"}]
+            }
+          }
+        }
+      }
+    </script>
+<style>
+        body {
+            background-color: transparent;
+            font-family: 'Inter', sans-serif;
+        }
+        .glass-panel {
+            background: rgba(28, 28, 28, 0.85);
+            backdrop-filter: blur(20px);
+            border: 1px solid #464554;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
+            font-size: 18px;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #464554;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen bg-black/40">
+<!-- Toolbar Popup Container -->
+<div class="w-[400px] glass-panel rounded-lg overflow-hidden flex flex-col shadow-2xl">
+<!-- Header / Status Row -->
+<header class="flex justify-between items-center px-md py-sm bg-surface-container-lowest border-b border-outline-variant h-12">
+<div class="flex items-center gap-sm">
+<div class="w-2 h-2 rounded-full bg-primary animate-pulse shadow-[0_0_8px_#c2c1ff]"></div>
+<span class="font-label-caps text-label-caps text-on-surface uppercase tracking-widest">Engine running</span>
+</div>
+<div class="flex gap-sm">
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors">settings</button>
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors">close</button>
+</div>
+</header>
+<!-- Workspace Selector -->
+<div class="p-md bg-surface-container-low border-b border-outline-variant">
+<label class="font-label-caps text-label-caps text-outline block mb-base">Current Workspace</label>
+<button class="w-full flex justify-between items-center bg-surface-container-highest/50 border border-outline-variant px-sm py-sm rounded group hover:border-primary transition-all duration-200">
+<div class="flex items-center gap-sm">
+<span class="material-symbols-outlined text-primary">terminal</span>
+<span class="font-body-md text-on-surface">Active Workspace <span class="text-on-surface-variant text-body-sm">(128 memories)</span></span>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-transform group-active:translate-y-px">expand_more</span>
+</button>
+</div>
+<!-- Stat Grid -->
+<div class="grid grid-cols-2 gap-px bg-outline-variant">
+<div class="bg-surface p-md flex flex-col gap-xs">
+<span class="font-label-caps text-label-caps text-outline uppercase">Memories</span>
+<span class="font-headline-md text-headline-md text-on-surface">128</span>
+</div>
+<div class="bg-surface p-md flex flex-col gap-xs border-l border-outline-variant">
+<div class="flex justify-between items-start">
+<span class="font-label-caps text-label-caps text-primary uppercase">Pending</span>
+<div class="w-2 h-2 rounded-full bg-primary"></div>
+</div>
+<span class="font-headline-md text-headline-md text-primary">3</span>
+</div>
+</div>
+<!-- Toggles Section -->
+<div class="p-md space-y-gutter border-t border-outline-variant">
+<!-- Capture Toggle -->
+<div class="flex justify-between items-center group">
+<div class="flex flex-col">
+<span class="font-body-md text-on-surface">Capture Active</span>
+<span class="font-body-sm text-on-surface-variant">Syncing memory state</span>
+</div>
+<button class="w-11 h-6 bg-secondary-container rounded-full relative transition-colors duration-200 flex items-center p-1" onclick="this.classList.toggle('bg-primary-container'); this.querySelector('.thumb').classList.toggle('translate-x-5')">
+<div class="thumb w-4 h-4 bg-on-primary-container rounded-sm transition-transform duration-200 shadow-sm"></div>
+</button>
+</div>
+<!-- Incognito Toggle -->
+<div class="flex justify-between items-center group">
+<div class="flex flex-col">
+<span class="font-body-md text-on-surface">Incognito Mode</span>
+<span class="font-body-sm text-on-surface-variant">Disable persistent storage</span>
+</div>
+<button class="w-11 h-6 bg-secondary-container rounded-full relative transition-colors duration-200 flex items-center p-1" onclick="this.classList.toggle('bg-primary-container'); this.querySelector('.thumb').classList.toggle('translate-x-5')">
+<div class="thumb w-4 h-4 bg-on-primary-container rounded-sm transition-transform duration-200 shadow-sm"></div>
+</button>
+</div>
+</div>
+<!-- Actions -->
+<div class="p-md flex flex-col gap-sm border-t border-outline-variant bg-surface-container-lowest">
+<button class="w-full flex items-center justify-between px-md py-sm bg-primary text-on-primary font-body-md rounded-sm hover:opacity-90 active:scale-[0.98] transition-all">
+<span>Open Sidebar</span>
+<span class="material-symbols-outlined">dock_to_right</span>
+</button>
+<button class="w-full flex items-center justify-between px-md py-sm bg-surface-container-highest border border-outline-variant text-on-surface font-body-md rounded-sm hover:bg-surface-bright active:scale-[0.98] transition-all">
+<span>Memory Audit</span>
+<span class="material-symbols-outlined">analytics</span>
+</button>
+</div>
+<!-- Footer -->
+<footer class="px-md py-sm border-t border-outline-variant flex justify-between items-center bg-surface-container-lowest">
+<div class="flex items-center gap-xs">
+<span class="material-symbols-outlined text-outline text-[14px]">encrypted</span>
+<span class="font-label-caps text-label-caps text-outline uppercase tracking-tighter">Local only · No data sent</span>
+</div>
+<span class="font-code-md text-on-surface-variant text-[10px]">v2.4.0-stable</span>
+</footer>
+</div>
+<!-- Background Decorative Element (Mental Model Aesthetic) -->
+<div class="fixed inset-0 -z-10 overflow-hidden opacity-20 pointer-events-none">
+<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full border border-primary/20 scale-150"></div>
+<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full border border-primary/10"></div>
+</div>
+<script>
+        // Micro-interactions for buttons
+        document.querySelectorAll('button').forEach(btn => {
+            btn.addEventListener('mousedown', () => {
+                btn.style.transform = 'scale(0.98)';
+            });
+            btn.addEventListener('mouseup', () => {
+                btn.style.transform = 'scale(1)';
+            });
+            btn.addEventListener('mouseleave', () => {
+                btn.style.transform = 'scale(1)';
+            });
+        });
+    </script>
+</body></html>
