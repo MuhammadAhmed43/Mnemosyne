@@ -10,24 +10,28 @@ interface Props {
 
 export function PendingReviewCard({ item, onApprove, onReject }: Props) {
   return (
-    <div className="rounded-lg border border-border bg-bg-secondary p-3">
-      <div className="mb-1 flex items-center justify-between">
+    <div className="space-y-sm border border-outline-variant bg-surface-container p-sm">
+      <div className="flex items-center justify-between">
         <NodeTypeBadge type={item.candidate_type} />
-        <span className="text-[11px] text-text-secondary">
+        <span className="font-code-md text-[10px] text-on-surface-variant">
           {Math.round(item.candidate_confidence * 100)}% · {item.source_platform}
         </span>
       </div>
-      <p className="mb-2 text-sm text-text-primary">{item.candidate_content}</p>
+      <p className="font-body-sm text-body-sm text-on-surface">{item.candidate_content}</p>
       {item.source_context && (
-        <p className="mb-2 border-l-2 border-border pl-2 text-xs italic text-text-secondary">
+        <p className="border-l-2 border-outline-variant pl-sm font-body-sm text-body-sm italic text-on-surface-variant">
           "{item.source_context}"
         </p>
       )}
-      <div className="flex gap-2">
-        <button className="rounded bg-success px-3 py-1 text-xs font-medium text-white" onClick={() => onApprove(item.id)}>
+      <div className="flex gap-xs">
+        <button
+          className="flex-1 bg-primary py-1 font-label-caps text-[9px] uppercase text-on-primary transition-opacity hover:opacity-90"
+          onClick={() => onApprove(item.id)}>
           Approve
         </button>
-        <button className="rounded border border-border px-3 py-1 text-xs text-text-secondary hover:text-danger" onClick={() => onReject(item.id)}>
+        <button
+          className="flex-1 border border-outline-variant py-1 font-label-caps text-[9px] uppercase text-on-surface transition-colors hover:bg-surface-container-high"
+          onClick={() => onReject(item.id)}>
           Reject
         </button>
       </div>
