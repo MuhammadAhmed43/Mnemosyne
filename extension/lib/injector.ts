@@ -55,29 +55,36 @@ async function getAutoInsert(): Promise<boolean> {
   }
 }
 
+// Mirrors the Stitch "Technical Density" context bar. Shadow DOM can't reach the
+// bundled Tailwind/fonts, so colors are inlined and fonts fall back to system
+// (the host page won't have Geist/JetBrains Mono). Element IDs are unchanged so
+// the wiring below still applies.
 function styles(): HTMLStyleElement {
   const s = document.createElement("style")
   s.textContent = `
-    .mn-bar{font-family:Inter,system-ui,sans-serif;background:rgba(22,27,34,.72);color:#E6EAF2;
-      border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:8px 12px;margin:0;max-width:760px;
-      font-size:13px;display:flex;align-items:center;gap:8px;box-shadow:0 8px 30px rgba(0,0,0,.5);
-      -webkit-backdrop-filter:blur(14px) saturate(140%);backdrop-filter:blur(14px) saturate(140%)}
-    .mn-meta{color:#9BA6B8}
-    .mn-ws{background:#0D1117;color:#E6EAF2;border:1px solid #2A3340;border-radius:7px;
-      padding:4px 7px;font-size:12px;max-width:200px;cursor:pointer}
-    .mn-btn{margin-left:auto;background:#3A66D6;color:#fff;border:none;border-radius:7px;
-      padding:6px 11px;cursor:pointer;font-size:12px;min-height:28px;font-weight:500}
-    .mn-btn:hover{background:#2E52B0}
-    .mn-toggle{margin-left:0!important;background:#232E3D!important;color:#C4CCD8!important}
-    .mn-toggle:hover{background:#2C3A4C!important}
-    .mn-x{background:transparent;color:#9BA6B8;border:none;cursor:pointer;font-size:14px;
-      min-width:28px;min-height:28px;line-height:1;border-radius:7px}
-    .mn-x:hover{color:#E6EAF2;background:#232E3D}
+    .mn-bar{font-family:Inter,system-ui,sans-serif;background:rgba(30,31,35,.72);color:#e3e2e7;
+      border:1px solid #464554;border-radius:8px;padding:6px 8px;margin:0;max-width:760px;
+      font-size:13px;display:flex;align-items:center;gap:6px;min-height:44px;box-shadow:0 12px 40px rgba(0,0,0,.55);
+      -webkit-backdrop-filter:blur(20px) saturate(140%);backdrop-filter:blur(20px) saturate(140%)}
+    .mn-brand{font-weight:900;letter-spacing:-.3px;font-size:16px;color:#e3e2e7;padding-left:4px}
+    .mn-meta{color:#c7c4d6;font-size:12px;white-space:nowrap;margin-left:auto;padding:0 8px}
+    .mn-ws{background:#292a2e;color:#e3e2e7;border:1px solid #464554;border-radius:2px;
+      padding:4px 7px;font-size:11px;text-transform:uppercase;letter-spacing:.05em;max-width:180px;cursor:pointer}
+    .mn-btn{background:#c2c1ff;color:#1c0b9f;border:none;border-radius:2px;
+      padding:0 12px;cursor:pointer;font-size:10px;text-transform:uppercase;letter-spacing:.05em;
+      font-weight:700;height:28px}
+    .mn-btn:hover{opacity:.9}
+    .mn-toggle{background:transparent!important;color:#c7c4d6!important;font-weight:700!important}
+    .mn-toggle:hover{background:#292a2e!important;color:#e3e2e7!important}
+    .mn-x{background:transparent;color:#c7c4d6;border:none;cursor:pointer;font-size:16px;
+      min-width:28px;min-height:28px;line-height:1;border-radius:2px}
+    .mn-x:hover{color:#ffb4ab}
     /* Visible keyboard focus ring (WCAG 2.4.7) — UA defaults are easily lost on dark UI. */
-    .mn-btn:focus-visible,.mn-x:focus-visible,.mn-ws:focus-visible{outline:2px solid #6E9BFF;outline-offset:2px}
-    .mn-body{max-width:760px;margin:6px auto 0;background:rgba(13,17,23,.72);border:1px solid rgba(255,255,255,.08);
-      border-radius:8px;padding:10px 12px;white-space:pre-wrap;font-size:12px;color:#C4CCD8;display:none;
-      -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
+    .mn-btn:focus-visible,.mn-x:focus-visible,.mn-ws:focus-visible,.mn-toggle:focus-visible{outline:2px solid #c2c1ff;outline-offset:2px}
+    .mn-body{max-width:760px;margin:6px auto 0;background:rgba(0,0,0,.4);border:1px solid #464554;
+      border-radius:4px;padding:10px 12px;white-space:pre-wrap;font-size:12px;line-height:1.6;
+      font-family:"JetBrains Mono",ui-monospace,monospace;color:#c7c4d6;display:none;
+      -webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px)}
   `
   return s
 }
@@ -105,12 +112,14 @@ function usable(result: CtxResult | null): result is CtxResult {
 
 export async function injectContext(config: PlatformConfig, hint?: string): Promise<void> {
   const result = await fetchContext(config, { hint })
-  if (result?.status === "offline") {
+  if (!result || result.status === "offline") {
     showOfflineBanner()
     return
   }
   document.getElementById(OFFLINE_ID)?.remove() // engine is back
-  if (!usable(result)) return
+  // Always render when the engine is reachable — even with no matching memories,
+  // we show an idle bar (workspace + capture controls) so it's clear Mnemosyne is
+  // active. The "Insert into prompt" action only appears when there's real context.
   render(config, result)
   wireHintReinference(config)
   void maybeAutoInsert(config, result)
@@ -128,9 +137,9 @@ function showOfflineBanner(): void {
   shadow.appendChild(styles())
   const wrap = document.createElement("div")
   wrap.innerHTML = `
-    <div class="mn-bar" style="border-color:rgba(240,80,107,.5)">
-      <span style="font-weight:600">Mnemosyne engine is offline</span>
-      <span class="mn-meta">start the local app to capture &amp; recall memory</span>
+    <div class="mn-bar" style="border-color:rgba(255,180,171,.5);background:rgba(147,0,10,.4)">
+      <span class="mn-brand" style="font-size:13px">Mnemosyne engine is offline</span>
+      <span class="mn-meta" style="margin-left:0">start the local app to capture &amp; recall memory</span>
       <button class="mn-x" id="mn-off-x" aria-label="Dismiss offline notice" style="margin-left:auto">×</button>
     </div>`
   shadow.appendChild(wrap)
@@ -146,6 +155,7 @@ function showOfflineBanner(): void {
  *  (a programmatic clipboard write needs a user gesture, which we don't have). */
 async function maybeAutoInsert(config: PlatformConfig, result: CtxResult): Promise<void> {
   if (autoInserted || manualPick) return
+  if (!usable(result)) return // nothing to insert when there are no matching memories
   if (!(await getAutoInsert())) return
   const input = resolveEditor(config.inputSelector)
   if (!input || readInputText(input).length > 0) return // don't clobber a draft
@@ -164,19 +174,29 @@ function render(config: PlatformConfig, result: CtxResult): void {
   const shadow = host.attachShadow({ mode: "open" })
   shadow.appendChild(styles())
 
+  const hasCtx = (result.nodes_included?.length ?? 0) > 0
+  const meta = hasCtx
+    ? `${result.nodes_included.length} items · ${result.token_count} tokens`
+    : "Ready · no matching memories yet"
+  // Insert/Show only make sense when there's actual context to offer.
+  const ctxActions = hasCtx
+    ? `<button class="mn-btn" id="mn-insert">Insert into prompt</button>
+       <button class="mn-btn mn-toggle" id="mn-toggle" aria-label="Show or hide the injected context">Show</button>`
+    : ""
+  const body = hasCtx ? `<div class="mn-body" id="mn-body">${escapeHtml(stripWrapper(result.context_string))}</div>` : ""
+
   const wrap = document.createElement("div")
   wrap.innerHTML = `
     <div class="mn-bar">
-      <span style="font-weight:600;letter-spacing:.2px">Mnemosyne</span>
+      <span class="mn-brand">Mnemosyne</span>
       <select class="mn-ws" id="mn-ws" aria-label="Active workspace — switch to use a different memory set" title="Active workspace — switch to use a different memory set"></select>
-      <span class="mn-meta">${result.nodes_included.length} items · ${result.token_count} tokens</span>
+      <span class="mn-meta">${meta}</span>
       <button class="mn-btn mn-toggle" id="mn-auto" aria-label="Toggle auto-insert into new empty chats" title="Auto-insert context into new empty chats">Auto: …</button>
       <button class="mn-btn mn-toggle" id="mn-pause" aria-label="Pause capturing this conversation" title="Pause capturing this conversation">Pause</button>
-      <button class="mn-btn" id="mn-insert">Insert into prompt</button>
-      <button class="mn-btn mn-toggle" id="mn-toggle" aria-label="Show or hide the injected context">Show</button>
+      ${ctxActions}
       <button class="mn-x" id="mn-close" aria-label="Close Mnemosyne bar">×</button>
     </div>
-    <div class="mn-body" id="mn-body">${escapeHtml(stripWrapper(result.context_string))}</div>
+    ${body}
   `
   shadow.appendChild(wrap)
   document.body.appendChild(host)
