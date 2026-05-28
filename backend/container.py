@@ -92,6 +92,12 @@ class ServiceContainer:
     def session_repo(self, ws: str) -> SessionRepository:
         return SessionRepository(self.db.get_workspace(ws))
 
+    # ---- global (cross-workspace) repositories ---- #
+    def profile_repo(self) -> "ProfileRepository":
+        from backend.repositories.profile_repo import ProfileRepository
+
+        return ProfileRepository(self.db.get_global())
+
     # ---- per-workspace services ---- #
     def graph_service(self, ws: str) -> GraphService:
         return GraphService(self.node_repo(ws), self.edge_repo(ws), self.audit_repo, self.embedding)
