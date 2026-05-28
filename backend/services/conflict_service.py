@@ -15,6 +15,7 @@ false positives (e.g. "uses Python" vs "uses TypeScript" are not a conflict).
 from __future__ import annotations
 
 import logging
+import re
 from typing import Optional
 
 from backend.models.conflict import ConflictCandidate, ResolutionEvent
@@ -41,6 +42,42 @@ GOAL_COMPLETION_PHRASES = (
 )
 GOAL_STATE_SIM_THRESHOLD = 0.75
 
+# --- "change of plans" tech switch detection -------------------------------- #
+# A switch within the SAME category (e.g. one language -> another) for the same
+# project is a real contradiction the user expects to see. Mutually-exclusive
+# choices live in the same category; cross-category combos (Python + React) are
+# legitimate polyglot stacks and must NOT flag.
+TECH_CATEGORY: dict[str, str] = {
+    # languages
+    "python": "language", "typescript": "language", "javascript": "language",
+    "rust": "language", "go": "language", "golang": "language", "java": "language",
+    "kotlin": "language", "swift": "language", "ruby": "language", "c#": "language", "php": "language",
+    # databases
+    "postgresql": "database", "postgres": "database", "mysql": "database", "mongodb": "database",
+    "sqlite": "database", "redis": "database", "cassandra": "database", "dynamodb": "database",
+    "supabase": "database", "firebase": "database",
+    # frontend frameworks
+    "react": "frontend", "vue": "frontend", "angular": "frontend", "svelte": "frontend",
+    "next.js": "frontend", "nextjs": "frontend", "nuxt": "frontend", "remix": "frontend",
+    # backend frameworks
+    "fastapi": "backend", "django": "backend", "flask": "backend", "express": "backend",
+    "spring": "backend", "rails": "backend", "laravel": "backend",
+    # cloud / hosting (usually a single primary target)
+    "aws": "cloud", "gcp": "cloud", "azure": "cloud", "vercel": "cloud",
+    "railway": "cloud", "render": "cloud", "fly.io": "cloud", "netlify": "cloud",
+}
+TECH_ALIASES = {"golang": "go", "postgres": "postgresql", "nextjs": "next.js"}
+
+# Explicit "I'm changing my mind" cues — the signal that distinguishes a switch
+# from a first-time choice or a polyglot addition.
+SWITCH_CUE = re.compile(
+    r"\b(change of plans?|changed my mind|on second thought|actually,?|"
+    r"instead(?:\s+of)?|rather than|scrap(?:\s+that)?|forget|no longer|"
+    r"switch(?:ing|ed)?\s+to|migrat(?:e|ing|ed)\s+to|port(?:ing|ed)?\s+to|"
+    r"rewrit(?:e|ing)\s+in|moving\s+to|let'?s\s+(?:use|go\s+with)\s+\w+\s+instead)\b",
+    re.IGNORECASE,
+)
+
 
 class ConflictService:
     def __init__(
@@ -59,6 +96,7 @@ class ConflictService:
     def detect_conflicts(self, workspace_id: str, new_node: MemoryNode) -> list[ConflictCandidate]:
         found = self._detect_structural(workspace_id, new_node)
         found += self._detect_goal_state(workspace_id, new_node)
+        found += self._detect_choice_change(workspace_id, new_node)
         # dedup by node pair
         seen, unique = set(), []
         for c in found:
@@ -130,6 +168,61 @@ class ConflictService:
                         contradiction_score=score,
                         suggested_strategy=ConflictStrategy.TEMPORAL,
                         auto_resolvable=not goal.user_verified,
+                    )
+                )
+        return out
+
+    @staticmethod
+    def _techs_in(text: str) -> dict[str, str]:
+        """Map category -> canonical tech mentioned in `text` (word-boundary, case-insensitive)."""
+        low = (text or "").lower()
+        out: dict[str, str] = {}
+        for tech, cat in TECH_CATEGORY.items():
+            # word-ish boundary; escape dots in names like "next.js"/"fly.io"
+            if re.search(rf"(?<![\w]){re.escape(tech)}(?![\w])", low):
+                out[cat] = TECH_ALIASES.get(tech, tech)
+        return out
+
+    def _detect_choice_change(self, workspace_id: str, new_node: MemoryNode) -> list[ConflictCandidate]:
+        """Type VERSION_FORK: the user switches a tech/tool choice for the project
+        (e.g. "change of plans, use Go" after "build it in Python"). Gated on an
+        explicit switch cue so polyglot additions (Python + React) never flag.
+        Left for the user to resolve (auto_resolvable=False) so it stays visible."""
+        from backend.models.enums import NodeType  # local to avoid cycle at top
+
+        if new_node.node_type not in (NodeType.DECISION, NodeType.TECHNICAL_FACT):
+            return []
+        if not SWITCH_CUE.search(new_node.content):
+            return []
+        new_techs = self._techs_in(new_node.content)
+        if not new_techs:
+            return []
+
+        rows = self.nodes.conn.execute(
+            "SELECT id FROM memory_nodes WHERE workspace_id=? AND status='active' "
+            "AND valid_until IS NULL AND id != ? "
+            "AND node_type IN ('decision','technical_fact')",
+            (workspace_id, new_node.id),
+        ).fetchall()
+        out: list[ConflictCandidate] = []
+        seen: set[str] = set()
+        for r in rows:
+            prior = self.nodes.get(r["id"])
+            if prior is None or prior.id in seen:
+                continue
+            prior_techs = self._techs_in(prior.content)
+            # Same category, different chosen tech => a real switch/contradiction.
+            if any(cat in prior_techs and prior_techs[cat] != tech for cat, tech in new_techs.items()):
+                seen.add(prior.id)
+                out.append(
+                    ConflictCandidate(
+                        workspace_id=workspace_id,
+                        node_a_id=prior.id,
+                        node_b_id=new_node.id,
+                        conflict_type=ConflictType.VERSION_FORK,
+                        contradiction_score=0.85,
+                        suggested_strategy=ConflictStrategy.TEMPORAL,
+                        auto_resolvable=False,  # surface it; the user decides which choice stands
                     )
                 )
         return out
