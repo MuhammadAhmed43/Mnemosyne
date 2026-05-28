@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 
 import { GraphTab } from "~components/GraphTab"
 import { WorkspaceSelector } from "~components/WorkspaceSelector"
@@ -14,13 +14,13 @@ import type { Workspace } from "~lib/types"
 import "~style.css"
 
 type PageId = "overview" | "graph" | "memory" | "conflicts" | "sessions" | "settings"
-const NAV: [PageId, string][] = [
-  ["overview", "Overview"],
-  ["graph", "Graph"],
-  ["memory", "Memory"],
-  ["conflicts", "Conflicts"],
-  ["sessions", "Sessions"],
-  ["settings", "Settings"],
+const NAV: [PageId, string, string][] = [
+  ["overview", "Overview", "dashboard"],
+  ["graph", "Graph", "hub"],
+  ["memory", "Memory Banks", "memory"],
+  ["conflicts", "Conflicts", "warning"],
+  ["sessions", "Sessions", "history"],
+  ["settings", "Settings", "settings"],
 ]
 
 function download(filename: string, content: string, mime: string): void {
@@ -57,17 +57,46 @@ function Dashboard() {
   const [active, setActive] = useState<Workspace | null>(null)
   const [page, setPage] = useState<PageId>("overview")
   const [refreshKey, setRefreshKey] = useState(0) // bumped on live events to reload data views
+  const fileInput = useRef<HTMLInputElement>(null)
 
   const loadWorkspaces = useCallback(() => {
     if (!api || !online) return
-    api.listWorkspaces().then((r) => {
+    Promise.all([
+      api.listWorkspaces(),
+      chrome.storage.local.get("mn_active_workspace_id"),
+    ]).then(([r, stored]) => {
       setWorkspaces(r.workspaces)
-      // Keep the user on their current workspace; just refresh its data.
-      setActive((cur) => (cur ? r.workspaces.find((w) => w.id === cur.id) ?? cur : r.workspaces[0] ?? null))
+      // Keep the user on their current workspace; on first load fall back to
+      // the workspace the sidepanel / previous dashboard session was using.
+      setActive((cur) => {
+        if (cur) return r.workspaces.find((w) => w.id === cur.id) ?? cur
+        const remembered = r.workspaces.find((w) => w.id === stored.mn_active_workspace_id)
+        return remembered ?? r.workspaces[0] ?? null
+      })
     })
   }, [api, online])
 
   useEffect(loadWorkspaces, [loadWorkspaces])
+
+  // Persist the active workspace id so the sidepanel / next dashboard open
+  // lands on the same one.
+  useEffect(() => {
+    if (active) void chrome.storage.local.set({ mn_active_workspace_id: active.id })
+  }, [active])
+
+  // Stay in sync if the sidepanel switches workspaces while the dashboard tab
+  // is open.
+  useEffect(() => {
+    const handler = (changes: Record<string, chrome.storage.StorageChange>, area: string) => {
+      if (area !== "local" || !changes.mn_active_workspace_id) return
+      const newId = changes.mn_active_workspace_id.newValue as string | undefined
+      if (!newId || newId === active?.id) return
+      const ws = workspaces.find((w) => w.id === newId)
+      if (ws) setActive(ws)
+    }
+    chrome.storage.onChanged.addListener(handler)
+    return () => chrome.storage.onChanged.removeListener(handler)
+  }, [workspaces, active])
 
   // Live updates: when the engine finishes extracting a turn, refresh counts and
   // the active view automatically, and toast what landed — no manual refresh,
@@ -103,10 +132,8 @@ function Dashboard() {
     }
   }, [api, online, loadWorkspaces])
 
-  if (!online || !api) return <div className="p-8 text-text-secondary">Mnemosyne engine is not running.</div>
-
   const exportWorkspace = async (fmt: "json" | "csv" | "md") => {
-    if (!active) return
+    if (!active || !api) return
     const data = await api.exportWorkspace(active.id)
     const nodes = (data.nodes as Record<string, unknown>[]) ?? []
     const base = `mnemosyne-${active.name.replace(/\s+/g, "_")}-${new Date().toISOString().slice(0, 10)}`
@@ -117,7 +144,7 @@ function Dashboard() {
 
   const importWorkspace = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
-    if (!file) return
+    if (!file || !api) return
     const reader = new FileReader()
     reader.onload = async () => {
       try {
@@ -133,61 +160,111 @@ function Dashboard() {
     e.target.value = ""
   }
 
+  if (!online || !api)
+    return (
+      <div className="flex h-screen items-center justify-center bg-background font-body-md text-on-surface-variant">
+        Mnemosyne engine is not running.
+      </div>
+    )
+
   return (
-    <div className="flex h-screen bg-bg-primary text-text-primary">
-      <aside className="flex w-[220px] flex-col border-r border-border">
-        <header className="border-b border-border p-4 text-lg font-semibold">Mnemosyne</header>
-        <div className="border-b border-border p-3">
-          <WorkspaceSelector workspaces={workspaces} active={active} onChange={setActive} />
-        </div>
-        <nav className="flex-1 py-2">
-          {NAV.map(([id, label]) => (
-            <button
-              key={id}
-              onClick={() => setPage(id)}
-              className={`flex w-full items-center gap-3 px-4 py-2.5 text-sm ${
-                page === id ? "border-r-2 border-accent bg-bg-hover text-accent" : "text-text-secondary hover:bg-bg-hover"
-              }`}
-            >
-              {label}
-            </button>
-          ))}
-        </nav>
-        <div className="space-y-2 border-t border-border p-3">
-          <div className="text-[10px] font-semibold uppercase text-text-tertiary">Export workspace</div>
-          <div className="flex gap-1">
-            {(["json", "csv", "md"] as const).map((fmt) => (
-              <button
-                key={fmt}
-                onClick={() => exportWorkspace(fmt)}
-                disabled={!active}
-                className="flex-1 rounded-lg border border-border bg-bg-secondary py-1.5 text-xs text-text-secondary hover:text-text-primary disabled:opacity-40"
-              >
-                {fmt.toUpperCase()}
-              </button>
-            ))}
+    <div className="flex h-screen overflow-hidden bg-background font-body-md text-on-background">
+      {/* SideNavBar */}
+      <aside className="z-50 flex h-full w-60 shrink-0 flex-col space-y-base border-r border-outline-variant bg-surface-container-lowest py-md">
+        {/* Wordmark & Workspace */}
+        <div className="mb-lg px-md">
+          <h1 className="font-headline-md text-headline-md font-black tracking-tight text-on-surface">Mnemosyne</h1>
+          <p className="font-body-sm text-body-sm text-on-surface-variant opacity-60">AI Persistent State</p>
+          <div className="mt-lg">
+            <WorkspaceSelector workspaces={workspaces} active={active} onChange={setActive} />
           </div>
-          <label className="block w-full cursor-pointer rounded-lg border border-border bg-bg-secondary py-2 text-center text-xs text-text-secondary hover:text-text-primary">
-            Import (JSON)
-            <input type="file" accept="application/json" onChange={importWorkspace} className="hidden" />
-          </label>
+        </div>
+
+        {/* Navigation */}
+        <nav className="flex-grow space-y-base overflow-y-auto px-xs">
+          {NAV.map(([id, label, icon]) => {
+            const isActive = page === id
+            return (
+              <button
+                key={id}
+                onClick={() => setPage(id)}
+                aria-current={isActive ? "page" : undefined}
+                className={`flex w-full items-center px-md py-sm transition-all hover:bg-surface-container-highest/50 ${
+                  isActive
+                    ? "translate-x-1 border-r-2 border-primary bg-secondary-container/30 text-primary"
+                    : "text-on-surface-variant hover:text-on-surface"
+                }`}>
+                <span className="material-symbols-outlined mr-sm">{icon}</span>
+                <span className="font-label-caps text-label-caps uppercase">{label}</span>
+              </button>
+            )
+          })}
+        </nav>
+
+        {/* Export & Import */}
+        <div className="mt-auto space-y-md border-t border-outline-variant px-md py-md">
+          <div className="space-y-xs">
+            <span className="mb-xs block font-label-caps text-label-caps uppercase text-on-surface-variant opacity-50">Export Engine</span>
+            <div className="grid grid-cols-3 gap-xs">
+              {(["json", "csv", "md"] as const).map((fmt) => (
+                <button
+                  key={fmt}
+                  onClick={() => exportWorkspace(fmt)}
+                  disabled={!active}
+                  className="border border-outline-variant bg-surface-container py-xs font-code-md text-code-md uppercase text-on-surface transition-colors hover:bg-surface-container-high disabled:opacity-40">
+                  {fmt}
+                </button>
+              ))}
+            </div>
+          </div>
+          <button
+            onClick={() => fileInput.current?.click()}
+            className="group flex w-full cursor-pointer flex-col items-center justify-center border-2 border-dashed border-outline-variant p-sm transition-colors hover:border-primary">
+            <span className="material-symbols-outlined mb-xs text-on-surface-variant group-hover:text-primary">upload_file</span>
+            <span className="font-label-caps text-label-caps uppercase text-on-surface-variant">Import State</span>
+          </button>
+          <input ref={fileInput} type="file" accept="application/json" onChange={importWorkspace} className="hidden" />
         </div>
       </aside>
-      <main className="flex-1 overflow-y-auto">
-        {/* `key` includes refreshKey so data views remount/reload on a live event.
+
+      {/* Main Workspace */}
+      <main className="relative flex min-w-0 flex-1 flex-col overflow-hidden">
+        {/* TopNavBar */}
+        <header className="sticky top-0 z-40 flex h-12 w-full items-center justify-between border-b border-outline-variant bg-surface/80 px-md backdrop-blur-xl">
+          <div className="flex items-center gap-xs">
+            <span className={`h-2 w-2 rounded-full ${online ? "animate-pulse bg-emerald-500" : "bg-error"}`} />
+            <span className="font-label-caps text-label-caps uppercase text-on-surface-variant">
+              {online ? "Engine running" : "Engine offline"}
+            </span>
+          </div>
+          <div className="flex items-center gap-md">
+            <button
+              onClick={() => setPage("settings")}
+              aria-label="Settings"
+              className="material-symbols-outlined rounded p-xs text-on-surface-variant transition-colors hover:bg-surface-container-high">
+              settings
+            </button>
+            <div className="flex h-8 w-8 items-center justify-center rounded-full border border-outline-variant bg-surface-container-high text-on-surface-variant">
+              <span className="material-symbols-outlined text-[18px]">person</span>
+            </div>
+          </div>
+        </header>
+
+        {/* Page Canvas — pages own their internal layout + any inspect panel.
+            `key` includes refreshKey so data views remount on a live event;
             Settings is excluded so an in-progress edit isn't wiped by a refresh. */}
         {!active ? (
-          <p className="p-8 text-text-secondary">No workspaces yet.</p>
+          <p className="p-lg font-body-md text-body-md text-on-surface-variant">No workspaces yet.</p>
         ) : page === "overview" ? (
-          <Overview key={refreshKey} api={api} workspaceId={active.id} />
+          <Overview key={refreshKey} api={api} workspaceId={active.id} workspaceName={active.name} onOpenGraph={() => setPage("graph")} />
         ) : page === "graph" ? (
-          <div className="h-full"><GraphTab key={refreshKey} api={api} workspaceId={active.id} /></div>
+          <GraphTab key={refreshKey} api={api} workspaceId={active.id} />
         ) : page === "memory" ? (
           <MemoryBrowser key={refreshKey} api={api} workspaceId={active.id} />
         ) : page === "conflicts" ? (
           <ConflictManager key={refreshKey} api={api} workspaceId={active.id} />
         ) : page === "sessions" ? (
-          <div className="h-full"><SessionReplay key={refreshKey} api={api} workspaceId={active.id} /></div>
+          <SessionReplay key={refreshKey} api={api} workspaceId={active.id} />
         ) : (
           <SettingsPage api={api} />
         )}
