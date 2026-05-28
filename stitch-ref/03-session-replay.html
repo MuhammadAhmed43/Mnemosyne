@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Mnemosyne | Session Replay</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&amp;family=JetBrains+Mono&amp;family=Geist:wght@600;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-secondary": "#313030",
+                        "error": "#ffb4ab",
+                        "background": "#121317",
+                        "on-background": "#e3e2e7",
+                        "tertiary": "#c8c6c5",
+                        "secondary-fixed-dim": "#c9c6c5",
+                        "surface-container-low": "#1a1b1f",
+                        "on-error-container": "#ffdad6",
+                        "on-secondary-fixed": "#1c1b1b",
+                        "on-secondary-fixed-variant": "#474646",
+                        "on-surface": "#e3e2e7",
+                        "tertiary-container": "#686767",
+                        "surface-container-highest": "#343539",
+                        "error-container": "#93000a",
+                        "outline": "#918f9f",
+                        "on-tertiary-container": "#e9e6e6",
+                        "surface-bright": "#38393d",
+                        "surface": "#121317",
+                        "on-primary-container": "#e7e4ff",
+                        "inverse-surface": "#e3e2e7",
+                        "surface-container-high": "#292a2e",
+                        "on-secondary-container": "#bab8b7",
+                        "outline-variant": "#464554",
+                        "on-primary-fixed": "#0c006a",
+                        "on-tertiary": "#313030",
+                        "secondary": "#c9c6c5",
+                        "on-primary-fixed-variant": "#3631b4",
+                        "secondary-container": "#4a4949",
+                        "primary": "#c2c1ff",
+                        "surface-dim": "#121317",
+                        "on-tertiary-fixed": "#1c1b1b",
+                        "primary-fixed": "#e2dfff",
+                        "primary-container": "#5856d6",
+                        "surface-container-lowest": "#0d0e12",
+                        "on-error": "#690005",
+                        "inverse-primary": "#4f4ccd",
+                        "on-primary": "#1c0b9f",
+                        "surface-tint": "#c2c1ff",
+                        "surface-container": "#1e1f23",
+                        "tertiary-fixed-dim": "#c8c6c5",
+                        "secondary-fixed": "#e5e2e1",
+                        "inverse-on-surface": "#2f3034",
+                        "on-tertiary-fixed-variant": "#474746",
+                        "on-surface-variant": "#c7c4d6",
+                        "primary-fixed-dim": "#c2c1ff",
+                        "surface-variant": "#343539",
+                        "tertiary-fixed": "#e5e2e1"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "md": "16px",
+                        "xl": "40px",
+                        "margin": "16px",
+                        "lg": "24px",
+                        "sm": "8px",
+                        "base": "4px",
+                        "xs": "4px",
+                        "gutter": "12px"
+                    },
+                    "fontFamily": {
+                        "body-sm": ["Inter"],
+                        "code-md": ["JetBrains Mono"],
+                        "headline-md": ["Geist"],
+                        "headline-lg": ["Geist"],
+                        "label-caps": ["Inter"],
+                        "body-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "body-sm": ["12px", {"lineHeight": "16px", "letterSpacing": "0", "fontWeight": "400"}],
+                        "code-md": ["13px", {"lineHeight": "18px", "letterSpacing": "0", "fontWeight": "400"}],
+                        "headline-md": ["18px", {"lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                        "headline-lg": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                        "label-caps": ["10px", {"lineHeight": "12px", "letterSpacing": "0.05em", "fontWeight": "700"}],
+                        "body-md": ["14px", {"lineHeight": "20px", "letterSpacing": "-0.01em", "fontWeight": "400"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            vertical-align: middle;
+            font-size: 18px;
+        }
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #464554; border-radius: 2px; }
+        ::-webkit-scrollbar-thumb:hover { background: #918f9f; }
+        body { background-color: #0d0e12; color: #e3e2e7; }
+        .tonal-layer-1 { background-color: #121317; }
+        .tonal-layer-2 { background-color: #1a1b1f; }
+    </style>
+</head>
+<body class="flex h-screen overflow-hidden font-body-md text-body-md">
+<!-- Left SideNavBar (Shared Component) -->
+<aside class="hidden md:flex flex-col h-full w-60 left-0 bg-surface-container-lowest border-r border-outline-variant py-md space-y-base z-50">
+<div class="px-md mb-lg">
+<div class="flex items-center gap-sm">
+<div class="w-6 h-6 bg-primary rounded-sm flex items-center justify-center">
+<span class="material-symbols-outlined text-on-primary text-[14px]">memory</span>
+</div>
+<div>
+<h1 class="font-headline-md text-headline-md font-black text-on-surface leading-none">Mnemosyne</h1>
+<p class="font-label-caps text-[8px] text-on-surface-variant tracking-[0.2em]">AI PERSISTENT STATE</p>
+</div>
+</div>
+</div>
+<nav class="flex-1">
+<a class="text-on-surface-variant flex items-center px-md py-sm hover:bg-surface-container-highest/50 text-on-surface transition-all group" href="#">
+<span class="material-symbols-outlined mr-sm text-[20px] group-hover:translate-x-1 duration-200">terminal</span>
+<span class="font-label-caps text-label-caps">Threads</span>
+</a>
+<a class="text-on-surface-variant flex items-center px-md py-sm hover:bg-surface-container-highest/50 text-on-surface transition-all group" href="#">
+<span class="material-symbols-outlined mr-sm text-[20px] group-hover:translate-x-1 duration-200">memory</span>
+<span class="font-label-caps text-label-caps">Memory Banks</span>
+</a>
+<!-- Active State Applied -->
+<a class="bg-secondary-container/30 text-primary border-r-2 border-primary flex items-center px-md py-sm" href="#">
+<span class="material-symbols-outlined mr-sm text-[20px]">insights</span>
+<span class="font-label-caps text-label-caps">Analytics</span>
+</a>
+<a class="text-on-surface-variant flex items-center px-md py-sm hover:bg-surface-container-highest/50 text-on-surface transition-all group" href="#">
+<span class="material-symbols-outlined mr-sm text-[20px] group-hover:translate-x-1 duration-200">token</span>
+<span class="font-label-caps text-label-caps">Workspace</span>
+</a>
+</nav>
+<div class="px-md mt-auto space-y-base">
+<button class="w-full bg-primary-container text-on-primary-container py-xs rounded font-label-caps text-label-caps hover:opacity-90 transition-opacity flex items-center justify-center gap-xs">
+<span class="material-symbols-outlined text-[16px]">add</span>
+                New Thread
+            </button>
+<div class="pt-md">
+<a class="text-on-surface-variant flex items-center px-sm py-xs hover:bg-surface-container-highest/50 transition-all" href="#">
+<span class="material-symbols-outlined mr-sm text-[18px]">description</span>
+<span class="font-label-caps text-label-caps">Docs</span>
+</a>
+<a class="text-on-surface-variant flex items-center px-sm py-xs hover:bg-surface-container-highest/50 transition-all" href="#">
+<span class="material-symbols-outlined mr-sm text-[18px]">cloud_done</span>
+<span class="font-label-caps text-label-caps">Status</span>
+</a>
+</div>
+</div>
+</aside>
+<!-- Main View Area -->
+<main class="flex flex-col flex-1 min-w-0">
+<!-- TopNavBar (Shared Component) -->
+<header class="flex justify-between items-center w-full px-md h-12 bg-surface/80 backdrop-blur-xl border-b border-outline-variant sticky top-0 z-50">
+<div class="flex items-center gap-md">
+<span class="font-headline-md text-headline-md font-bold text-on-surface tracking-tight">Analytics</span>
+<div class="h-4 w-[1px] bg-outline-variant"></div>
+<div class="flex items-center gap-xs bg-surface-container-high px-sm py-[2px] rounded border border-outline-variant">
+<span class="material-symbols-outlined text-primary text-[14px]">search</span>
+<input class="bg-transparent border-none text-body-sm font-body-sm focus:ring-0 p-0 w-48 text-on-surface-variant placeholder:text-outline" placeholder="Search sessions..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-md">
+<div class="flex items-center gap-xs">
+<div class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+<span class="font-label-caps text-label-caps text-on-surface-variant">Engine running</span>
+</div>
+<div class="flex items-center gap-sm">
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors">notifications</button>
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors">settings</button>
+<div class="w-8 h-8 rounded-full overflow-hidden border border-outline-variant hover:border-primary transition-all cursor-pointer">
+<img class="w-full h-full object-cover" data-alt="A professional studio headshot of a software architect in a dark tech environment. The person has a focused expression, lit by subtle blue and purple neon rim lighting that reflects their high-performance technical role. The background is a blurred server room with glowing indicator lights, maintaining a clean, modern, and high-fidelity corporate aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB_PjaY_ZWaW0PNTyFKqYDsob3yWHx5-i_AD_4t7f-u7c5S23aAn5jOGGWKfG-mFdTkvoBO0kicO5fe-Phl_Psce2_vR0yn5Snck3YZe4kzpMN4oE8ivsNydJnC3i_AGG5BQ8rc9H4wBCQXVJulR76_0_2jcBFHM60pBe2NnrJJkC_SBy1vA-fQJpz1c_yTi4uhELqoIDWqcITa_jJwnrlXR0aFc8UahalJZDquK61aZgmMHEQVQYTqYEH7H3bCVsLRNikUH34UZDQ"/>
+</div>
+</div>
+</div>
+</header>
+<!-- Two-Pane Layout -->
+<div class="flex flex-1 overflow-hidden">
+<!-- Session List (Pane 1: 400px fixed) -->
+<section class="w-[360px] border-r border-outline-variant bg-surface-container-lowest flex flex-col overflow-hidden">
+<div class="p-md border-b border-outline-variant flex justify-between items-center">
+<h2 class="font-label-caps text-label-caps text-on-surface-variant">RECENT SESSIONS</h2>
+<span class="font-label-caps text-[10px] bg-surface-container-highest px-xs py-[1px] rounded text-primary">12 ACTIVE</span>
+</div>
+<div class="flex-1 overflow-y-auto">
+<!-- Session Rows -->
+<div class="session-row p-md border-b border-outline-variant cursor-pointer hover:bg-surface-container-low transition-colors bg-surface-container-high/40 border-l-2 border-l-primary" data-session-id="1" onclick="selectSession(this)">
+<div class="flex justify-between items-start mb-base">
+<span class="font-label-caps text-label-caps text-primary">PLATFORM: GPT-4O</span>
+<span class="font-code-md text-[11px] text-outline">#s_9281a</span>
+</div>
+<div class="flex items-center gap-sm mb-xs">
+<span class="material-symbols-outlined text-[14px] text-on-surface-variant">sync_alt</span>
+<span class="font-body-md text-on-surface font-bold">State Persistence Leakage</span>
+</div>
+<div class="flex justify-between items-center">
+<span class="font-label-caps text-[10px] text-on-surface-variant">14 TURNS</span>
+<span class="font-label-caps text-[10px] text-outline">OCT 24, 14:02:11</span>
+</div>
+</div>
+<div class="session-row p-md border-b border-outline-variant cursor-pointer hover:bg-surface-container-low transition-colors" data-session-id="2" onclick="selectSession(this)">
+<div class="flex justify-between items-start mb-base">
+<span class="font-label-caps text-label-caps text-on-surface-variant">PLATFORM: CLAUDE-3.5</span>
+<span class="font-code-md text-[11px] text-outline">#s_f229x</span>
+</div>
+<div class="flex items-center gap-sm mb-xs">
+<span class="material-symbols-outlined text-[14px] text-on-surface-variant">sync_alt</span>
+<span class="font-body-md text-on-surface">Recursive Logical Loop</span>
+</div>
+<div class="flex justify-between items-center">
+<span class="font-label-caps text-[10px] text-on-surface-variant">8 TURNS</span>
+<span class="font-label-caps text-[10px] text-outline">OCT 24, 13:45:02</span>
+</div>
+</div>
+<div class="session-row p-md border-b border-outline-variant cursor-pointer hover:bg-surface-container-low transition-colors" data-session-id="3" onclick="selectSession(this)">
+<div class="flex justify-between items-start mb-base">
+<span class="font-label-caps text-label-caps text-on-surface-variant">PLATFORM: LOCAL-LLAMA</span>
+<span class="font-code-md text-[11px] text-outline">#s_v001p</span>
+</div>
+<div class="flex items-center gap-sm mb-xs">
+<span class="material-symbols-outlined text-[14px] text-on-surface-variant">sync_alt</span>
+<span class="font-body-md text-on-surface">Memory Indexing Failure</span>
+</div>
+<div class="flex justify-between items-center">
+<span class="font-label-caps text-[10px] text-on-surface-variant">22 TURNS</span>
+<span class="font-label-caps text-[10px] text-outline">OCT 23, 22:15:58</span>
+</div>
+</div>
+<div class="session-row p-md border-b border-outline-variant cursor-pointer hover:bg-surface-container-low transition-colors" data-session-id="4" onclick="selectSession(this)">
+<div class="flex justify-between items-start mb-base">
+<span class="font-label-caps text-label-caps text-on-surface-variant">PLATFORM: GPT-4O</span>
+<span class="font-code-md text-[11px] text-outline">#s_z992l</span>
+</div>
+<div class="flex items-center gap-sm mb-xs">
+<span class="material-symbols-outlined text-[14px] text-on-surface-variant">sync_alt</span>
+<span class="font-body-md text-on-surface">Standard Fact Recall</span>
+</div>
+<div class="flex justify-between items-center">
+<span class="font-label-caps text-[10px] text-on-surface-variant">3 TURNS</span>
+<span class="font-label-caps text-[10px] text-outline">OCT 23, 20:01:44</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Replay Area (Pane 2: Fluid) -->
+<section class="flex-1 tonal-layer-1 flex flex-col overflow-hidden relative" id="replay-canvas">
+<!-- Initial State: Active Content -->
+<div class="flex flex-col h-full" id="session-active">
+<!-- Pane Header -->
+<div class="h-12 border-b border-outline-variant flex items-center justify-between px-md bg-surface-container-lowest">
+<div class="flex items-center gap-sm">
+<span class="font-label-caps text-label-caps text-primary">REPLAY: SESSION_9281A</span>
+<span class="text-outline">/</span>
+<span class="font-label-caps text-label-caps text-on-surface-variant">LOGS</span>
+</div>
+<div class="flex gap-sm">
+<button class="px-sm py-1 bg-surface-container-highest border border-outline-variant rounded font-label-caps text-[10px] hover:bg-primary/20 hover:border-primary transition-all">EXPORT JSON</button>
+<button class="px-sm py-1 bg-surface-container-highest border border-outline-variant rounded font-label-caps text-[10px] hover:bg-primary/20 hover:border-primary transition-all">FORK STATE</button>
+</div>
+</div>
+<!-- Scrollable Content -->
+<div class="flex-1 overflow-y-auto p-lg space-y-lg">
+<!-- Turn Section -->
+<div class="space-y-md">
+<div class="flex items-center gap-md">
+<span class="font-label-caps text-label-caps bg-secondary-container px-sm py-1 border-l border-primary">TURN 01</span>
+<div class="h-[1px] flex-1 bg-outline-variant/30"></div>
+<span class="font-code-md text-[10px] text-outline">00:00:04.22</span>
+</div>
+<div class="space-y-xs">
+<!-- Extraction Row -->
+<div class="border border-outline-variant bg-surface-container-low p-sm flex gap-md items-start group hover:border-primary/50 transition-colors">
+<span class="font-label-caps text-[10px] w-20 px-xs py-1 border-l-2 border-green-500 bg-green-500/10 text-green-200">DECISION</span>
+<p class="font-body-md text-on-surface-variant flex-1">System prioritized short-term memory cache over long-term archival due to low latency requirements.</p>
+<span class="material-symbols-outlined text-outline group-hover:text-primary transition-colors cursor-pointer">more_vert</span>
+</div>
+<div class="border border-outline-variant bg-surface-container-low p-sm flex gap-md items-start group hover:border-primary/50 transition-colors">
+<span class="font-label-caps text-[10px] w-20 px-xs py-1 border-l-2 border-blue-500 bg-blue-500/10 text-blue-200">FACT</span>
+<p class="font-body-md text-on-surface-variant flex-1">User confirmed preference for Python-based execution environments for all upcoming tasks.</p>
+<span class="material-symbols-outlined text-outline group-hover:text-primary transition-colors cursor-pointer">more_vert</span>
+</div>
+</div>
+</div>
+<!-- Turn Section -->
+<div class="space-y-md">
+<div class="flex items-center gap-md">
+<span class="font-label-caps text-label-caps bg-secondary-container px-sm py-1 border-l border-primary">TURN 02</span>
+<div class="h-[1px] flex-1 bg-outline-variant/30"></div>
+<span class="font-code-md text-[10px] text-outline">00:00:12.89</span>
+</div>
+<div class="space-y-xs">
+<div class="border border-outline-variant bg-surface-container-low p-sm flex gap-md items-start group hover:border-primary/50 transition-colors">
+<span class="font-label-caps text-[10px] w-20 px-xs py-1 border-l-2 border-primary bg-primary/10 text-primary">RECALL</span>
+<p class="font-body-md text-on-surface-variant flex-1">Retrieved historical context from Session #s_0012 regarding 'API_KEY_EXPIRY' handling.</p>
+<span class="material-symbols-outlined text-outline group-hover:text-primary transition-colors cursor-pointer">more_vert</span>
+</div>
+<div class="border border-outline-variant bg-surface-container-low p-sm flex gap-md items-start group hover:border-primary/50 transition-colors">
+<span class="font-label-caps text-[10px] w-20 px-xs py-1 border-l-2 border-amber-500 bg-amber-500/10 text-amber-200">ANOMALY</span>
+<p class="font-body-md text-on-surface-variant flex-1">Unexpected termination of websocket stream detected during extraction of session metadata.</p>
+<span class="material-symbols-outlined text-outline group-hover:text-primary transition-colors cursor-pointer">more_vert</span>
+</div>
+</div>
+</div>
+<!-- Turn Section -->
+<div class="space-y-md">
+<div class="flex items-center gap-md">
+<span class="font-label-caps text-label-caps bg-secondary-container px-sm py-1 border-l border-primary">TURN 03</span>
+<div class="h-[1px] flex-1 bg-outline-variant/30"></div>
+<span class="font-code-md text-[10px] text-outline">00:01:04.11</span>
+</div>
+<div class="space-y-xs">
+<div class="border border-outline-variant bg-surface-container-low p-sm flex gap-md items-start group hover:border-primary/50 transition-colors">
+<span class="font-label-caps text-[10px] w-20 px-xs py-1 border-l-2 border-green-500 bg-green-500/10 text-green-200">DECISION</span>
+<p class="font-body-md text-on-surface-variant flex-1">Auto-committed state changes to vector database cluster V4-West.</p>
+<span class="material-symbols-outlined text-outline group-hover:text-primary transition-colors cursor-pointer">more_vert</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Empty State (Hidden by default) -->
+<div class="hidden absolute inset-0 bg-background flex flex-col items-center justify-center text-center p-xl" id="session-empty">
+<div class="w-16 h-16 border border-outline-variant rounded-full flex items-center justify-center mb-md bg-surface-container-low">
+<span class="material-symbols-outlined text-[32px] text-outline-variant">history</span>
+</div>
+<h3 class="font-headline-md text-headline-md text-on-surface mb-xs">No Session Selected</h3>
+<p class="text-on-surface-variant font-body-md max-w-xs">Select a session from the list to replay its memory extractions and turn-by-turn state changes.</p>
+</div>
+</section>
+</div>
+</main>
+<script>
+        function selectSession(element) {
+            // Remove active classes from all rows
+            document.querySelectorAll('.session-row').forEach(row => {
+                row.classList.remove('bg-surface-container-high/40', 'border-l-2', 'border-l-primary');
+                row.querySelector('.font-body-md').classList.remove('font-bold');
+                row.querySelector('.font-label-caps').classList.remove('text-primary');
+                row.querySelector('.font-label-caps').classList.add('text-on-surface-variant');
+            });
+
+            // Add active classes to selected row
+            element.classList.add('bg-surface-container-high/40', 'border-l-2', 'border-l-primary');
+            element.querySelector('.font-body-md').classList.add('font-bold');
+            const label = element.querySelector('.font-label-caps');
+            label.classList.remove('text-on-surface-variant');
+            label.classList.add('text-primary');
+
+            // Toggle empty state / content visibility logic
+            const activeContent = document.getElementById('session-active');
+            const emptyContent = document.getElementById('session-empty');
+            
+            // For demo purposes, we alternate based on session ID
+            if (element.getAttribute('data-session-id') === '4') {
+                activeContent.classList.add('hidden');
+                emptyContent.classList.remove('hidden');
+            } else {
+                activeContent.classList.remove('hidden');
+                emptyContent.classList.add('hidden');
+                
+                // Dynamic header update
+                const sessionId = element.querySelector('.font-code-md').innerText.replace('#', '').toUpperCase();
+                document.querySelector('#session-active .text-primary').innerText = `REPLAY: ${sessionId}`;
+            }
+        }
+    </script>
+</body></html>
