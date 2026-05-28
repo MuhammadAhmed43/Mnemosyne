@@ -28,10 +28,12 @@ INFER_THRESHOLD = 0.55  # Doc 10 §8 — at/above this, route to the matched wor
 # existing workspace (similarity < 0.55), give it its own workspace rather than
 # forcing it into a loosely-related one.
 AUTO_CREATE_MAX_SIM = 0.55
-# A URL→workspace pin is only honored for a substantive turn if the content is at
-# least loosely related to the pinned workspace; below this, the user has switched
-# topics within a pinned chat and content-based routing takes over.
-URL_PIN_MIN_SIM = 0.40
+# A URL→workspace pin is only honored for a substantive turn if the content is
+# genuinely about the pinned workspace. Kept fairly high because two unrelated
+# software projects still embed somewhat similarly — a loose pin would drag a new
+# topic into the existing workspace. The LLM router is the real authority; this is
+# the offline fallback.
+URL_PIN_MIN_SIM = 0.62
 
 # When the user explicitly declares a NEW project ("I want to build an app for X"),
 # only reuse an existing workspace if it's a near-exact match — otherwise it's a
@@ -212,6 +214,19 @@ class WorkspaceService:
             if seg in self._CONTAINER_SEGMENTS and i + 1 < len(parts):
                 return f"{host}/{seg}/{parts[i + 1]}"
         return f"{host}/{'/'.join(parts)}" if parts else host
+
+    def url_mapping(self, tab_url: str) -> Optional[str]:
+        """The workspace this conversation URL is already bound to (or None).
+        Used to keep routing sticky once a chat is pinned, so the per-turn LLM
+        router can't re-route an ongoing conversation into a brand-new workspace."""
+        if not tab_url:
+            return None
+        row = self.db.get_global().execute(
+            "SELECT workspace_id FROM platform_mappings WHERE ? LIKE '%' || url_pattern || '%' "
+            "ORDER BY priority DESC LIMIT 1",
+            (tab_url,),
+        ).fetchone()
+        return row[0] if row else None
 
     def remember_mapping(self, platform: str, workspace_id: str, tab_url: str) -> str:
         """Persist 'this URL pattern -> this workspace' so future visits route
