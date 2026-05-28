@@ -24,6 +24,7 @@ from backend.routes import (
     node_routes,
     onboarding_routes,
     pending_routes,
+    profile_routes,
     settings_routes,
     websocket_routes,
     workspace_routes,
@@ -77,6 +78,9 @@ async def lifespan(app: FastAPI):
     # which matters because several features degrade gracefully when optional
     # dependencies (SQLCipher, spaCy, Ollama) aren't present.
     llm_ok = await container.pipeline.llm.is_available()
+    if llm_ok:
+        # Pre-load the model in the background so the first capture isn't a cold load.
+        asyncio.create_task(container.pipeline.llm.warm())
     scheme = "https" if config.use_tls else "http"
     banner = (
         "\n  ┌─ Mnemosyne engine v%s ─────────────────────────\n"
@@ -118,7 +122,7 @@ app.add_middleware(
 for module in (
     health_routes, capture_routes, context_routes, workspace_routes, node_routes,
     graph_routes, pending_routes, conflict_routes, settings_routes, export_routes,
-    onboarding_routes, extras_routes, websocket_routes,
+    onboarding_routes, extras_routes, profile_routes, websocket_routes,
 ):
     app.include_router(module.router)
 
