@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&amp;family=JetBrains+Mono:wght@400&amp;family=Geist:wght@600;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-secondary": "#313030",
+                        "error": "#ffb4ab",
+                        "background": "#0A0A0A",
+                        "on-background": "#e3e2e7",
+                        "tertiary": "#c8c6c5",
+                        "secondary-fixed-dim": "#c9c6c5",
+                        "surface-container-low": "#1a1b1f",
+                        "on-error-container": "#ffdad6",
+                        "on-secondary-fixed": "#1c1b1b",
+                        "on-secondary-fixed-variant": "#474646",
+                        "on-surface": "#e3e2e7",
+                        "tertiary-container": "#686767",
+                        "surface-container-highest": "#343539",
+                        "error-container": "#93000a",
+                        "outline": "#918f9f",
+                        "on-tertiary-container": "#e9e6e6",
+                        "surface-bright": "#38393d",
+                        "surface": "#121317",
+                        "on-primary-container": "#e7e4ff",
+                        "inverse-surface": "#e3e2e7",
+                        "surface-container-high": "#292a2e",
+                        "on-secondary-container": "#bab8b7",
+                        "outline-variant": "#464554",
+                        "on-primary-fixed": "#0c006a",
+                        "on-tertiary": "#313030",
+                        "secondary": "#c9c6c5",
+                        "on-primary-fixed-variant": "#3631b4",
+                        "secondary-container": "#4a4949",
+                        "primary": "#c2c1ff",
+                        "surface-dim": "#121317",
+                        "on-tertiary-fixed": "#1c1b1b",
+                        "primary-fixed": "#e2dfff",
+                        "primary-container": "#5856d6",
+                        "surface-container-lowest": "#0d0e12",
+                        "on-error": "#690005",
+                        "inverse-primary": "#4f4ccd",
+                        "on-primary": "#1c0b9f",
+                        "surface-tint": "#c2c1ff",
+                        "surface-container": "#1e1f23",
+                        "tertiary-fixed-dim": "#c8c6c5",
+                        "secondary-fixed": "#e5e2e1",
+                        "inverse-on-surface": "#2f3034",
+                        "on-tertiary-fixed-variant": "#474746",
+                        "on-surface-variant": "#c7c4d6",
+                        "primary-fixed-dim": "#c2c1ff",
+                        "surface-variant": "#343539",
+                        "tertiary-fixed": "#e5e2e1"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "md": "16px",
+                        "xl": "40px",
+                        "margin": "16px",
+                        "lg": "24px",
+                        "sm": "8px",
+                        "base": "4px",
+                        "xs": "4px",
+                        "gutter": "12px"
+                    },
+                    "fontFamily": {
+                        "body-sm": ["Inter"],
+                        "code-md": ["JetBrains Mono"],
+                        "headline-md": ["Geist"],
+                        "headline-lg": ["Geist"],
+                        "label-caps": ["Inter"],
+                        "body-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "body-sm": ["12px", {"lineHeight": "16px", "letterSpacing": "0", "fontWeight": "400"}],
+                        "code-md": ["13px", {"lineHeight": "18px", "letterSpacing": "0", "fontWeight": "400"}],
+                        "headline-md": ["18px", {"lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                        "headline-lg": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                        "label-caps": ["10px", {"lineHeight": "12px", "letterSpacing": "0.05em", "fontWeight": "700"}],
+                        "body-md": ["14px", {"lineHeight": "20px", "letterSpacing": "-0.01em", "fontWeight": "400"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .backdrop-blur-hud { backdrop-filter: blur(20px); }
+        .inner-border { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05); }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #262626; border-radius: 2px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #343539; }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md overflow-hidden flex h-screen">
+<!-- Left Side Navigation (Anchor) -->
+<aside class="hidden md:flex flex-col h-full w-60 border-r border-outline-variant bg-surface-container-lowest py-md space-y-base">
+<div class="px-md mb-lg">
+<h1 class="font-headline-md text-headline-md font-black text-on-surface tracking-tight">Mnemosyne</h1>
+<p class="font-body-sm text-body-sm text-on-surface-variant">AI Persistent State</p>
+</div>
+<nav class="flex-1">
+<a class="text-on-surface-variant flex items-center px-md py-sm hover:bg-surface-container-highest/50 text-on-surface transition-all hover:translate-x-1 duration-200" href="#">
+<span class="material-symbols-outlined mr-gutter" data-icon="terminal">terminal</span>
+<span class="font-label-caps text-label-caps">Threads</span>
+</a>
+<a class="bg-secondary-container/30 text-primary border-r-2 border-primary flex items-center px-md py-sm hover:bg-surface-container-highest/50 transition-all hover:translate-x-1 duration-200" href="#">
+<span class="material-symbols-outlined mr-gutter" data-icon="memory">memory</span>
+<span class="font-label-caps text-label-caps">Memory Banks</span>
+</a>
+<a class="text-on-surface-variant flex items-center px-md py-sm hover:bg-surface-container-highest/50 text-on-surface transition-all hover:translate-x-1 duration-200" href="#">
+<span class="material-symbols-outlined mr-gutter" data-icon="insights">insights</span>
+<span class="font-label-caps text-label-caps">Analytics</span>
+</a>
+<a class="text-on-surface-variant flex items-center px-md py-sm hover:bg-surface-container-highest/50 text-on-surface transition-all hover:translate-x-1 duration-200" href="#">
+<span class="material-symbols-outlined mr-gutter" data-icon="token">token</span>
+<span class="font-label-caps text-label-caps">Workspace</span>
+</a>
+</nav>
+<div class="px-md mt-auto pt-md border-t border-outline-variant">
+<button class="w-full bg-primary-container text-on-primary-container font-label-caps text-label-caps py-sm px-md rounded hover:opacity-80 transition-opacity flex items-center justify-center gap-xs">
+<span class="material-symbols-outlined !text-[14px]" data-icon="add">add</span>
+                New Thread
+            </button>
+<div class="mt-md space-y-xs">
+<a class="text-on-surface-variant flex items-center px-md py-xs text-[11px] hover:text-on-surface" href="#">
+<span class="material-symbols-outlined mr-sm !text-[16px]" data-icon="description">description</span>
+                    DOCS
+                </a>
+<a class="text-on-surface-variant flex items-center px-md py-xs text-[11px] hover:text-on-surface" href="#">
+<span class="material-symbols-outlined mr-sm !text-[16px]" data-icon="cloud_done">cloud_done</span>
+                    STATUS
+                </a>
+</div>
+</div>
+</aside>
+<!-- Main Content (Placeholder for background) -->
+<main class="flex-1 bg-background flex flex-col items-center justify-center opacity-20 select-none">
+<div class="text-center">
+<span class="material-symbols-outlined text-[64px]" data-icon="hub">hub</span>
+<p class="font-code-md text-code-md mt-md">GLOBAL_PERSISTENCE_LAYER_V2.0</p>
+</div>
+</main>
+<!-- Side Panel (The Focused Extension) -->
+<aside class="w-[360px] h-full bg-surface-container-lowest border-l border-outline-variant flex flex-col z-40" id="side-panel">
+<!-- Header: Workspace Selector -->
+<header class="p-md border-b border-outline-variant">
+<div class="flex items-center justify-between mb-gutter">
+<div class="flex items-center gap-sm">
+<div class="w-2 h-2 bg-primary rounded-full"></div>
+<span class="font-label-caps text-label-caps text-on-surface">Project: Mnemosyne</span>
+</div>
+<button class="text-on-surface-variant hover:text-on-surface transition-colors">
+<span class="material-symbols-outlined text-[18px]" data-icon="expand_more">expand_more</span>
+</button>
+</div>
+<div class="flex items-center gap-base p-xs bg-surface-container-low rounded border border-outline-variant">
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant ml-xs" data-icon="search">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-body-sm w-full py-xs placeholder:text-on-surface-variant" placeholder="Jump to workspace..." type="text"/>
+<kbd class="text-[9px] border border-outline-variant rounded px-1 bg-surface py-0.5 text-on-surface-variant">⌘K</kbd>
+</div>
+</header>
+<!-- Tabs Navigation -->
+<nav class="flex border-b border-outline-variant">
+<button class="flex-1 py-gutter flex flex-col items-center gap-xs border-b-2 transition-colors duration-200" id="tab-memory-btn" onclick="switchTab('memory')">
+<span class="material-symbols-outlined text-[18px]" data-icon="memory">memory</span>
+<span class="font-label-caps text-label-caps">Memory</span>
+</button>
+<button class="flex-1 py-gutter flex flex-col items-center gap-xs border-b-2 border-transparent text-on-surface-variant hover:text-on-surface transition-colors" id="tab-graph-btn" onclick="switchTab('graph')">
+<span class="material-symbols-outlined text-[18px]" data-icon="account_tree">account_tree</span>
+<span class="font-label-caps text-label-caps">Graph</span>
+</button>
+<button class="flex-1 py-gutter flex flex-col items-center gap-xs border-b-2 border-transparent text-on-surface-variant hover:text-on-surface transition-colors" id="tab-audit-btn" onclick="switchTab('audit')">
+<span class="material-symbols-outlined text-[18px]" data-icon="verified_user">verified_user</span>
+<span class="font-label-caps text-label-caps">Audit</span>
+</button>
+<button class="flex-1 py-gutter flex flex-col items-center gap-xs border-b-2 border-transparent text-on-surface-variant hover:text-on-surface transition-colors" id="tab-search-btn" onclick="switchTab('search')">
+<span class="material-symbols-outlined text-[18px]" data-icon="filter_list">filter_list</span>
+<span class="font-label-caps text-label-caps">Filter</span>
+</button>
+</nav>
+<!-- Tab Content: Memory (Active State) -->
+<div class="flex-1 overflow-y-auto custom-scrollbar p-md space-y-lg" id="content-memory">
+<!-- Goals Section -->
+<section>
+<div class="flex items-center justify-between mb-sm">
+<h3 class="font-label-caps text-label-caps text-on-surface-variant">Goals (3)</h3>
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[14px]" data-icon="add_circle">add_circle</span>
+</button>
+</div>
+<div class="space-y-xs">
+<!-- Memory Card -->
+<div class="group relative bg-surface-container p-sm border-l-2 border-primary transition-all hover:bg-surface-container-high">
+<div class="flex justify-between items-start">
+<span class="font-code-md text-[10px] text-primary bg-primary/10 px-1">STRATEGIC</span>
+<span class="text-[9px] text-on-surface-variant">2h ago</span>
+</div>
+<p class="text-body-sm mt-xs leading-relaxed">Optimize state hydration for multi-modal vector inputs in the latency-sensitive path.</p>
+<!-- Actions on Hover -->
+<div class="absolute inset-0 bg-surface-container-high/90 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-sm transition-opacity backdrop-blur-sm">
+<button class="p-xs hover:bg-surface rounded transition-colors" title="Edit"><span class="material-symbols-outlined text-[14px]" data-icon="edit">edit</span></button>
+<button class="p-xs hover:bg-surface rounded transition-colors" title="Boost"><span class="material-symbols-outlined text-[14px]" data-icon="bolt">bolt</span></button>
+<button class="p-xs hover:bg-surface rounded transition-colors" title="Move"><span class="material-symbols-outlined text-[14px]" data-icon="drag_indicator">drag_indicator</span></button>
+<button class="p-xs hover:bg-surface rounded transition-colors text-error" title="Delete"><span class="material-symbols-outlined text-[14px]" data-icon="delete">delete</span></button>
+</div>
+</div>
+<div class="group relative bg-surface-container p-sm border-l-2 border-primary/40 transition-all hover:bg-surface-container-high">
+<span class="font-code-md text-[10px] text-primary bg-primary/10 px-1">OPERATIONAL</span>
+<p class="text-body-sm mt-xs leading-relaxed">Refactor Memory Bank #4 to support epoch-based versioning.</p>
+<div class="absolute inset-0 bg-surface-container-high/90 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-sm transition-opacity">
+<button class="p-xs hover:bg-surface rounded"><span class="material-symbols-outlined text-[14px]" data-icon="edit">edit</span></button>
+</div>
+</div>
+</div>
+</section>
+<!-- Decisions Section -->
+<section>
+<div class="flex items-center justify-between mb-sm">
+<h3 class="font-label-caps text-label-caps text-on-surface-variant">Decisions (2)</h3>
+</div>
+<div class="space-y-xs">
+<div class="group bg-surface-container p-sm border-l-2 border-secondary transition-all">
+<div class="flex justify-between">
+<span class="font-code-md text-[10px] text-secondary bg-secondary/10 px-1">ARCHITECTURAL</span>
+<span class="material-symbols-outlined text-[12px] text-on-surface-variant" data-icon="lock" data-weight="fill" style="font-variation-settings: 'FILL' 1;">lock</span>
+</div>
+<p class="text-body-sm mt-xs">Use Redis for ephemeral state while keeping PostgreSQL as the anchor for persistent graph nodes.</p>
+</div>
+</div>
+</section>
+</div>
+<!-- Tab Content: Audit (Review State) -->
+<div class="hidden flex-1 flex flex-col overflow-hidden" id="content-audit">
+<div class="p-md border-b border-outline-variant bg-surface-container-low flex items-center justify-between">
+<div>
+<h3 class="font-label-caps text-label-caps text-on-surface">Pending Review (3)</h3>
+<p class="text-[10px] text-on-surface-variant">Incoming state updates from Node_09</p>
+</div>
+<button class="text-[10px] font-label-caps text-error border border-error/30 px-sm py-xs hover:bg-error/10 transition-colors">Reject all</button>
+</div>
+<div class="flex-1 overflow-y-auto custom-scrollbar p-md space-y-gutter">
+<!-- Audit Cards -->
+<div class="bg-surface-container border border-outline-variant p-sm space-y-sm">
+<div class="flex items-center gap-xs">
+<span class="material-symbols-outlined text-[14px] text-primary" data-icon="auto_awesome">auto_awesome</span>
+<span class="font-code-md text-[10px] text-on-surface-variant">Suggested Fact</span>
+</div>
+<p class="text-body-sm italic">"User prefers dark-first interface for all cognitive visualization threads."</p>
+<div class="flex gap-xs">
+<button class="flex-1 bg-primary text-on-primary font-label-caps text-[9px] py-1 hover:opacity-90">Approve</button>
+<button class="flex-1 border border-outline-variant text-on-surface font-label-caps text-[9px] py-1 hover:bg-surface">Reject</button>
+</div>
+</div>
+<div class="bg-surface-container border border-outline-variant p-sm space-y-sm">
+<div class="flex items-center gap-xs">
+<span class="material-symbols-outlined text-[14px] text-secondary" data-icon="history">history</span>
+<span class="font-code-md text-[10px] text-on-surface-variant">Update Priority</span>
+</div>
+<p class="text-body-sm">Boost priority of thread "Tensorflow Debug" from normal to critical.</p>
+<div class="flex gap-xs">
+<button class="flex-1 bg-primary text-on-primary font-label-caps text-[9px] py-1">Approve</button>
+<button class="flex-1 border border-outline-variant text-on-surface font-label-caps text-[9px] py-1">Reject</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Empty State (Used for Graph or Search as fallback) -->
+<div class="hidden flex-1 flex flex-col items-center justify-center p-xl text-center opacity-40" id="content-graph">
+<div class="mb-md">
+<span class="material-symbols-outlined text-[48px]" data-icon="blur_off">blur_off</span>
+</div>
+<h4 class="font-label-caps text-label-caps mb-xs">No Graph Nodes</h4>
+<p class="text-[11px] leading-relaxed">Connect more threads to visualize the cognitive semantic network.</p>
+<div class="mt-lg flex gap-base">
+<div class="w-2 h-2 border border-on-surface-variant"></div>
+<div class="w-2 h-2 border border-on-surface-variant"></div>
+<div class="w-2 h-2 border border-on-surface-variant"></div>
+</div>
+</div>
+<!-- Panel Footer -->
+<footer class="p-md border-t border-outline-variant bg-surface-container-lowest">
+<div class="flex items-center justify-between">
+<div class="flex -space-x-1">
+<div class="w-6 h-6 rounded-full border border-background bg-primary-container flex items-center justify-center">
+<span class="text-[8px] font-bold">AI</span>
+</div>
+<div class="w-6 h-6 rounded-full border border-background bg-secondary-container flex items-center justify-center">
+<span class="text-[8px] font-bold">ME</span>
+</div>
+</div>
+<button class="text-on-surface-variant hover:text-on-surface">
+<span class="material-symbols-outlined text-[18px]" data-icon="settings">settings</span>
+</button>
+</div>
+</footer>
+</aside>
+<!-- Command Palette Overlay -->
+<div class="fixed inset-0 z-[100] bg-background/60 backdrop-blur-sm flex items-start justify-center pt-[153px] hidden transition-opacity duration-200 opacity-0" id="command-palette">
+<div class="w-full max-w-lg bg-surface-container-high border border-outline-variant shadow-2xl rounded-lg overflow-hidden flex flex-col backdrop-blur-hud">
+<!-- Search Input -->
+<div class="flex items-center px-md py-gutter border-b border-outline-variant">
+<span class="material-symbols-outlined text-primary mr-sm" data-icon="terminal">terminal</span>
+<input class="flex-1 bg-transparent border-none text-body-md focus:ring-0 placeholder:text-on-surface-variant" id="cmd-input" placeholder="Type a command or search..." type="text"/>
+<kbd class="text-[10px] text-on-surface-variant px-1 border border-outline-variant bg-surface rounded">ESC</kbd>
+</div>
+<!-- Command List -->
+<div class="max-h-[300px] overflow-y-auto custom-scrollbar">
+<div class="p-xs">
+<div class="px-md py-xs">
+<span class="font-label-caps text-[9px] text-on-surface-variant">NAVIGATION</span>
+</div>
+<button class="w-full text-left px-md py-sm hover:bg-surface flex items-center justify-between group">
+<div class="flex items-center gap-sm">
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant group-hover:text-primary transition-colors" data-icon="memory">memory</span>
+<span class="text-body-sm">Go to Memory Bank</span>
+</div>
+<span class="text-[10px] text-on-surface-variant opacity-0 group-hover:opacity-100">G M</span>
+</button>
+<button class="w-full text-left px-md py-sm hover:bg-surface flex items-center justify-between group">
+<div class="flex items-center gap-sm">
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant group-hover:text-primary transition-colors" data-icon="insights">insights</span>
+<span class="text-body-sm">View Analytics Dashboard</span>
+</div>
+<span class="text-[10px] text-on-surface-variant opacity-0 group-hover:opacity-100">G A</span>
+</button>
+<div class="px-md py-xs mt-xs">
+<span class="font-label-caps text-[9px] text-on-surface-variant">MEMORY ACTIONS</span>
+</div>
+<button class="w-full text-left px-md py-sm hover:bg-surface flex items-center justify-between group">
+<div class="flex items-center gap-sm">
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant group-hover:text-primary transition-colors" data-icon="add_box">add_box</span>
+<span class="text-body-sm">Store new observation</span>
+</div>
+<span class="text-[10px] text-on-surface-variant opacity-0 group-hover:opacity-100">N O</span>
+</button>
+<button class="w-full text-left px-md py-sm hover:bg-surface flex items-center justify-between group">
+<div class="flex items-center gap-sm">
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant group-hover:text-error transition-colors" data-icon="delete_sweep">delete_sweep</span>
+<span class="text-body-sm">Flush ephemeral cache</span>
+</div>
+<span class="text-[10px] text-on-surface-variant opacity-0 group-hover:opacity-100">F C</span>
+</button>
+</div>
+</div>
+<!-- Footer -->
+<div class="p-sm bg-surface-container-highest flex items-center justify-between border-t border-outline-variant">
+<div class="flex gap-md">
+<div class="flex items-center gap-xs">
+<kbd class="text-[9px] border border-outline-variant px-1 rounded">↑↓</kbd>
+<span class="text-[10px] text-on-surface-variant">Navigate</span>
+</div>
+<div class="flex items-center gap-xs">
+<kbd class="text-[9px] border border-outline-variant px-1 rounded">↵</kbd>
+<span class="text-[10px] text-on-surface-variant">Select</span>
+</div>
+</div>
+<span class="text-[10px] text-on-surface-variant font-code-md">CMD_PALETTE_v4</span>
+</div>
+</div>
+</div>
+<script>
+        function switchTab(tab) {
+            // Hide all content
+            document.querySelectorAll('[id^="content-"]').forEach(el => el.classList.add('hidden'));
+            // Remove active styles from buttons
+            document.querySelectorAll('[id^="tab-"]').forEach(el => {
+                el.classList.add('text-on-surface-variant', 'border-transparent');
+                el.classList.remove('text-primary', 'border-primary');
+            });
+
+            // Show selected content
+            const activeContent = document.getElementById(`content-${tab}`);
+            if (activeContent) {
+                activeContent.classList.remove('hidden');
+                if (tab === 'memory' || tab === 'audit') {
+                    activeContent.classList.add('flex');
+                }
+            }
+
+            // Set active button style
+            const activeBtn = document.getElementById(`tab-${tab}-btn`);
+            if (activeBtn) {
+                activeBtn.classList.remove('text-on-surface-variant', 'border-transparent');
+                activeBtn.classList.add('text-primary', 'border-primary');
+            }
+        }
+
+        // Initialize state
+        switchTab('memory');
+
+        // Command Palette Logic
+        const palette = document.getElementById('command-palette');
+        const cmdInput = document.getElementById('cmd-input');
+
+        document.addEventListener('keydown', (e) => {
+            if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+                e.preventDefault();
+                palette.classList.remove('hidden');
+                setTimeout(() => {
+                    palette.classList.add('opacity-100');
+                    cmdInput.focus();
+                }, 10);
+            }
+            if (e.key === 'Escape') {
+                palette.classList.remove('opacity-100');
+                setTimeout(() => palette.classList.add('hidden'), 200);
+            }
+        });
+
+        palette.addEventListener('click', (e) => {
+            if (e.target === palette) {
+                palette.classList.remove('opacity-100');
+                setTimeout(() => palette.classList.add('hidden'), 200);
+            }
+        });
+
+        // Atmospheric Micro-interactions
+        document.querySelectorAll('.group').forEach(el => {
+            el.addEventListener('mouseenter', () => {
+                // Subtle pulse or scale could go here
+            });
+        });
+    </script>
+</body></html>
