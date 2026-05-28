@@ -24,7 +24,7 @@ export function MemoryTab({ api, workspaceId }: { api: MnemosyneAPI; workspaceId
     })
   }, [api, workspaceId])
 
-  if (loading) return <p className="p-4 text-sm text-text-secondary">Loading…</p>
+  if (loading) return <p className="p-md font-body-sm text-body-sm text-on-surface-variant">Loading…</p>
   if (nodes.length === 0) return <NoMemories />
 
   const grouped = nodes.reduce<Record<string, MemoryNode[]>>((acc, n) => {
@@ -33,13 +33,13 @@ export function MemoryTab({ api, workspaceId }: { api: MnemosyneAPI; workspaceId
   }, {})
 
   return (
-    <div className="space-y-4 p-3">
+    <div className="space-y-lg p-md">
       {TYPE_ORDER.filter((t) => grouped[t]).map((t) => (
         <section key={t}>
-          <h3 className="mb-2 text-xs font-semibold uppercase text-text-secondary">
+          <h3 className="mb-sm font-label-caps text-label-caps uppercase text-on-surface-variant">
             {TYPE_LABELS[t]} ({grouped[t].length})
           </h3>
-          <div className="space-y-2">
+          <div className="space-y-xs">
             {grouped[t].map((n) => (
               <MemoryNodeCard key={n.id} node={n} compact />
             ))}
