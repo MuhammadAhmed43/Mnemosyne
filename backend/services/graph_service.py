@@ -202,6 +202,61 @@ class GraphService:
         )
         return updated
 
+    # Ordered sections for the "living brief" — the current truth of a project,
+    # assembled deterministically from active memories (no LLM, always accurate).
+    _BRIEF_SECTIONS = (
+        ("Goals", (NodeType.GOAL,)),
+        ("Decisions", (NodeType.DECISION,)),
+        ("Stack & Tools", (NodeType.TECHNICAL_FACT, NodeType.ENTITY)),
+        ("Requirements & Constraints", (NodeType.CONSTRAINT,)),
+        ("Open Problems", (NodeType.PROBLEM, NodeType.OPEN_QUESTION)),
+        ("Tasks", (NodeType.TASK,)),
+        ("Preferences", (NodeType.PREFERENCE,)),
+        ("Insights & Ideas", (NodeType.INSIGHT, NodeType.HYPOTHESIS)),
+        ("Events", (NodeType.EVENT,)),
+        ("Notes", (NodeType.USER_NOTE,)),
+    )
+
+    def build_brief(self, workspace_id: str) -> dict:
+        """The living brief: active memories grouped into ordered sections, plus a
+        recent-activity list. This is the workspace's current truth — used for the
+        dashboard view and as the basis for injected context."""
+        active = self.nodes.get_active(workspace_id, limit=500)
+        by_type: dict = {}
+        for n in active:
+            by_type.setdefault(n.node_type, []).append(n)
+
+        sections = []
+        for title, types in self._BRIEF_SECTIONS:
+            items = [n for t in types for n in by_type.get(t, [])]
+            items.sort(key=lambda n: n.importance_score, reverse=True)
+            if items:
+                sections.append({
+                    "title": title,
+                    "items": [
+                        {
+                            "id": n.id,
+                            "type": n.node_type.value,
+                            "content": n.content,
+                            "importance": round(n.importance_score, 2),
+                            "rationale": (n.structured_data or {}).get("rationale"),
+                            "status": (n.structured_data or {}).get("status"),
+                        }
+                        for n in items
+                    ],
+                })
+
+        recent = sorted(active, key=lambda n: (n.updated_at or n.created_at), reverse=True)[:8]
+        changelog = [
+            {
+                "id": n.id, "type": n.node_type.value, "content": n.content,
+                "version": n.version,
+                "at": (n.updated_at or n.created_at).isoformat(),
+            }
+            for n in recent
+        ]
+        return {"workspace_id": workspace_id, "total": len(active), "sections": sections, "recent": changelog}
+
     def boost_node(self, node_id: str, workspace_id: str, importance: float, permanent: bool = False) -> None:
         self.nodes.update_fields(
             node_id, importance_score=min(1.0, importance),
