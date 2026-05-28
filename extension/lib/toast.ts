@@ -14,14 +14,14 @@ function ensureHost(): ShadowRoot {
   style.textContent = `
     .wrap{position:fixed;bottom:18px;right:18px;z-index:2147483647;display:flex;
       flex-direction:column;gap:8px;align-items:flex-end;font-family:Inter,system-ui,sans-serif}
-    .t{background:rgba(22,27,34,.72);-webkit-backdrop-filter:blur(14px) saturate(140%);
-      backdrop-filter:blur(14px) saturate(140%);color:#E6EAF2;border:1px solid rgba(42,51,64,.7);
-      border-left:3px solid #3A66D6;border-radius:10px;padding:9px 13px;font-size:13px;
-      box-shadow:0 8px 24px rgba(0,0,0,.5);opacity:0;transform:translateY(8px);
+    .t{background:rgba(30,31,35,.72);-webkit-backdrop-filter:blur(20px) saturate(140%);
+      backdrop-filter:blur(20px) saturate(140%);color:#e3e2e7;border:1px solid #464554;
+      border-left:3px solid #c2c1ff;border-radius:4px;padding:9px 13px;font-size:13px;
+      box-shadow:0 12px 30px rgba(0,0,0,.55);opacity:0;transform:translateY(8px);
       transition:opacity .18s,transform .18s;max-width:320px}
     .t.show{opacity:1;transform:translateY(0)}
-    .t.err{border-left-color:#F0506B}
-    .t .sub{color:#9BA6B8;font-size:11px;margin-top:2px}
+    .t.err{border-left-color:#ffb4ab}
+    .t .sub{color:#c7c4d6;font-size:11px;margin-top:2px}
   `
   shadow.appendChild(style)
   const wrap = document.createElement("div")
