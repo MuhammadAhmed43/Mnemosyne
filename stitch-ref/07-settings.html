@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Mnemosyne | Settings</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&amp;family=JetBrains+Mono&amp;family=Geist:wght@600;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-secondary": "#313030",
+                    "error": "#ffb4ab",
+                    "background": "#121317",
+                    "on-background": "#e3e2e7",
+                    "tertiary": "#c8c6c5",
+                    "secondary-fixed-dim": "#c9c6c5",
+                    "surface-container-low": "#1a1b1f",
+                    "on-error-container": "#ffdad6",
+                    "on-secondary-fixed": "#1c1b1b",
+                    "on-secondary-fixed-variant": "#474646",
+                    "on-surface": "#e3e2e7",
+                    "tertiary-container": "#686767",
+                    "surface-container-highest": "#343539",
+                    "error-container": "#93000a",
+                    "outline": "#918f9f",
+                    "on-tertiary-container": "#e9e6e6",
+                    "surface-bright": "#38393d",
+                    "surface": "#121317",
+                    "on-primary-container": "#e7e4ff",
+                    "inverse-surface": "#e3e2e7",
+                    "surface-container-high": "#292a2e",
+                    "on-secondary-container": "#bab8b7",
+                    "outline-variant": "#464554",
+                    "on-primary-fixed": "#0c006a",
+                    "on-tertiary": "#313030",
+                    "secondary": "#c9c6c5",
+                    "on-primary-fixed-variant": "#3631b4",
+                    "secondary-container": "#4a4949",
+                    "primary": "#c2c1ff",
+                    "surface-dim": "#121317",
+                    "on-tertiary-fixed": "#1c1b1b",
+                    "primary-fixed": "#e2dfff",
+                    "primary-container": "#5856d6",
+                    "surface-container-lowest": "#0d0e12",
+                    "on-error": "#690005",
+                    "inverse-primary": "#4f4ccd",
+                    "on-primary": "#1c0b9f",
+                    "surface-tint": "#c2c1ff",
+                    "surface-container": "#1e1f23",
+                    "tertiary-fixed-dim": "#c8c6c5",
+                    "secondary-fixed": "#e5e2e1",
+                    "inverse-on-surface": "#2f3034",
+                    "on-tertiary-fixed-variant": "#474746",
+                    "on-surface-variant": "#c7c4d6",
+                    "primary-fixed-dim": "#c2c1ff",
+                    "surface-variant": "#343539",
+                    "tertiary-fixed": "#e5e2e1"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "spacing": {
+                    "md": "16px",
+                    "xl": "40px",
+                    "margin": "16px",
+                    "lg": "24px",
+                    "sm": "8px",
+                    "base": "4px",
+                    "xs": "4px",
+                    "gutter": "12px"
+            },
+            "fontFamily": {
+                    "body-sm": ["Inter"],
+                    "code-md": ["JetBrains Mono"],
+                    "headline-md": ["Geist"],
+                    "headline-lg": ["Geist"],
+                    "label-caps": ["Inter"],
+                    "body-md": ["Inter"]
+            },
+            "fontSize": {
+                    "body-sm": ["12px", {"lineHeight": "16px", "letterSpacing": "0", "fontWeight": "400"}],
+                    "code-md": ["13px", {"lineHeight": "18px", "letterSpacing": "0", "fontWeight": "400"}],
+                    "headline-md": ["18px", {"lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                    "headline-lg": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                    "label-caps": ["10px", {"lineHeight": "12px", "letterSpacing": "0.05em", "fontWeight": "700"}],
+                    "body-md": ["14px", {"lineHeight": "20px", "letterSpacing": "-0.01em", "fontWeight": "400"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            font-size: 18px;
+        }
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            background: transparent;
+            cursor: pointer;
+        }
+        input[type="range"]::-webkit-slider-runnable-track {
+            background: #262626;
+            height: 2px;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            margin-top: -6px;
+            background-color: #c2c1ff;
+            height: 14px;
+            width: 14px;
+            border-radius: 0;
+        }
+        .custom-toggle {
+            position: relative;
+            display: inline-block;
+            width: 32px;
+            height: 16px;
+        }
+        .custom-toggle input { opacity: 0; width: 0; height: 0; }
+        .slider-toggle {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #262626;
+            transition: .2s;
+        }
+        .slider-toggle:before {
+            position: absolute;
+            content: "";
+            height: 10px; width: 10px;
+            left: 3px; bottom: 3px;
+            background-color: #e3e2e7;
+            transition: .2s;
+        }
+        input:checked + .slider-toggle { background-color: #5856d6; }
+        input:checked + .slider-toggle:before { transform: translateX(16px); background-color: #fff; }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md text-body-md overflow-hidden flex h-screen">
+<!-- Sidebar Navigation (Predicted Component) -->
+<aside class="hidden md:flex flex-col h-full w-60 left-0 bg-surface-container-lowest border-r border-outline-variant py-md space-y-base shrink-0">
+<div class="px-md mb-lg">
+<h1 class="font-headline-md text-headline-md font-black text-on-surface tracking-tight">Mnemosyne</h1>
+<p class="font-body-sm text-body-sm text-on-surface-variant opacity-60">AI Persistent State</p>
+</div>
+<nav class="flex-1 space-y-base">
+<div class="text-on-surface-variant flex items-center px-md py-sm hover:bg-surface-container-highest/50 text-on-surface transition-all cursor-pointer group">
+<span class="material-symbols-outlined mr-md group-hover:translate-x-1 duration-200">terminal</span>
+<span class="font-label-caps text-label-caps">Threads</span>
+</div>
+<div class="text-on-surface-variant flex items-center px-md py-sm hover:bg-surface-container-highest/50 text-on-surface transition-all cursor-pointer group">
+<span class="material-symbols-outlined mr-md group-hover:translate-x-1 duration-200">memory</span>
+<span class="font-label-caps text-label-caps">Memory Banks</span>
+</div>
+<div class="text-on-surface-variant flex items-center px-md py-sm hover:bg-surface-container-highest/50 text-on-surface transition-all cursor-pointer group">
+<span class="material-symbols-outlined mr-md group-hover:translate-x-1 duration-200">insights</span>
+<span class="font-label-caps text-label-caps">Analytics</span>
+</div>
+<div class="text-on-surface-variant flex items-center px-md py-sm hover:bg-surface-container-highest/50 text-on-surface transition-all cursor-pointer group">
+<span class="material-symbols-outlined mr-md group-hover:translate-x-1 duration-200">token</span>
+<span class="font-label-caps text-label-caps">Workspace</span>
+</div>
+</nav>
+<div class="px-md mt-auto space-y-base">
+<button class="w-full bg-primary-container text-on-primary-container py-sm font-label-caps text-label-caps tracking-widest hover:opacity-90 transition-opacity flex items-center justify-center">
+<span class="material-symbols-outlined mr-xs">add</span> New Thread
+            </button>
+<div class="bg-secondary-container/30 text-primary border-r-2 border-primary flex items-center px-md py-sm cursor-default">
+<span class="material-symbols-outlined mr-md">settings</span>
+<span class="font-label-caps text-label-caps">Settings</span>
+</div>
+<div class="text-on-surface-variant flex items-center px-md py-sm hover:bg-surface-container-highest/50 transition-all cursor-pointer">
+<span class="material-symbols-outlined mr-md">description</span>
+<span class="font-label-caps text-label-caps">Docs</span>
+</div>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-1 flex flex-col h-full overflow-hidden">
+<!-- Top App Bar (Predicted Component) -->
+<header class="bg-surface/80 backdrop-blur-xl border-b border-outline-variant flex justify-between items-center w-full px-md h-12 z-50 shrink-0">
+<div class="flex items-center gap-md">
+<span class="font-label-caps text-label-caps text-primary">Workspace / Settings</span>
+</div>
+<div class="flex items-center gap-md">
+<div class="flex items-center gap-xs px-sm py-1 bg-surface-container-high rounded-full">
+<div class="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></div>
+<span class="font-label-caps text-label-caps text-on-surface-variant">Engine running</span>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-on-surface">notifications</span>
+<img alt="User avatar" class="w-7 h-7 rounded-lg border border-outline-variant" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB_PjaY_ZWaW0PNTyFKqYDsob3yWHx5-i_AD_4t7f-u7c5S23aAn5jOGGWKfG-mFdTkvoBO0kicO5fe-Phl_Psce2_vR0yn5Snck3YZe4kzpMN4oE8ivsNydJnC3i_AGG5BQ8rc9H4wBCQXVJulR76_0_2jcBFHM60pBe2NnrJJkC_SBy1vA-fQJpz1c_yTi4uhELqoIDWqcITa_jJwnrlXR0aFc8UahalJZDquK61aZgmMHEQVQYTqYEH7H3bCVsLRNikUH34UZDQ"/>
+</div>
+</header>
+<!-- Settings Canvas -->
+<section class="flex-1 overflow-y-auto p-xl scrollbar-hide">
+<div class="max-w-2xl mx-auto">
+<div class="mb-lg">
+<h2 class="font-headline-lg text-headline-lg text-on-surface mb-xs">Settings</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Configure persistent state and memory extraction parameters.</p>
+</div>
+<div class="space-y-md">
+<!-- Capture Panel -->
+<div class="bg-surface-container-low border border-outline-variant p-md">
+<header class="font-label-caps text-label-caps text-on-surface-variant border-b border-outline-variant pb-sm mb-md tracking-widest">CAPTURE</header>
+<div class="space-y-lg">
+<div class="flex justify-between items-center">
+<span class="font-body-md text-on-surface">Capture Enabled</span>
+<label class="custom-toggle">
+<input checked="" type="checkbox"/>
+<span class="slider-toggle"></span>
+</label>
+</div>
+<div class="flex justify-between items-center">
+<span class="font-body-md text-on-surface">Sensitive data filter</span>
+<label class="custom-toggle">
+<input checked="" type="checkbox"/>
+<span class="slider-toggle"></span>
+</label>
+</div>
+<div class="flex justify-between items-center">
+<span class="font-body-md text-on-surface">LLM extraction</span>
+<label class="custom-toggle">
+<input type="checkbox"/>
+<span class="slider-toggle"></span>
+</label>
+</div>
+</div>
+</div>
+<!-- Context Injection Panel -->
+<div class="bg-surface-container-low border border-outline-variant p-md">
+<header class="font-label-caps text-label-caps text-on-surface-variant border-b border-outline-variant pb-sm mb-md tracking-widest">CONTEXT INJECTION</header>
+<div class="space-y-sm">
+<div class="flex justify-between items-center mb-base">
+<span class="font-body-md text-on-surface">Token budget</span>
+<span class="font-code-md text-code-md text-primary" id="token-val">2048</span>
+</div>
+<input class="w-full" max="8192" min="512" oninput="document.getElementById('token-val').innerText = this.value" step="512" type="range" value="2048"/>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-xs">Maximum tokens allocated for persistent memory injection per query.</p>
+</div>
+</div>
+<!-- Memory Capture Routing Panel -->
+<div class="bg-surface-container-low border border-outline-variant p-md">
+<header class="font-label-caps text-label-caps text-on-surface-variant border-b border-outline-variant pb-sm mb-md tracking-widest">MEMORY CAPTURE ROUTING</header>
+<div class="space-y-lg">
+<div class="space-y-sm">
+<div class="flex justify-between items-center">
+<span class="font-body-md text-on-surface">Auto-commit delay</span>
+<span class="font-code-md text-code-md text-primary" id="commit-val">300ms</span>
+</div>
+<input class="w-full" max="2000" min="100" oninput="document.getElementById('commit-val').innerText = this.value + 'ms'" step="100" type="range" value="300"/>
+</div>
+<div class="space-y-sm">
+<div class="flex justify-between items-center">
+<span class="font-body-md text-on-surface">Min confidence score</span>
+<span class="font-code-md text-code-md text-primary" id="conf-val">0.85</span>
+</div>
+<input class="w-full" max="1" min="0" oninput="document.getElementById('conf-val').innerText = this.value" step="0.05" type="range" value="0.85"/>
+<p class="font-body-sm text-body-sm text-on-surface-variant border-l-2 border-primary pl-sm py-xs bg-primary/5">
+                                    Only memories exceeding this threshold will be persisted to the main vector bank.
+                                </p>
+</div>
+</div>
+</div>
+<!-- Privacy Panel -->
+<div class="bg-surface-container-low border border-outline-variant p-md">
+<header class="font-label-caps text-label-caps text-on-surface-variant border-b border-outline-variant pb-sm mb-md tracking-widest">PRIVACY</header>
+<div class="space-y-md">
+<div class="flex justify-between items-center">
+<div>
+<span class="font-body-md text-on-surface block">Cloud LLM processing</span>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Send sanitized logs to external providers for synthesis.</p>
+</div>
+<label class="custom-toggle">
+<input type="checkbox"/>
+<span class="slider-toggle"></span>
+</label>
+</div>
+<div class="p-sm bg-surface-container-highest/30 border border-outline-variant flex items-start gap-sm">
+<span class="material-symbols-outlined text-primary scale-75">lock</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant leading-tight">
+                                    All API transactions are encrypted with AES-256-GCM. Mnemosyne does not store raw API keys in plaintext.
+                                </span>
+</div>
+</div>
+</div>
+<!-- Save Action -->
+<div class="pt-lg flex justify-end items-center gap-md">
+<span class="font-body-sm text-body-sm text-emerald-400 opacity-0 transition-opacity flex items-center gap-xs" id="save-status">
+<span class="material-symbols-outlined text-[14px]">check_circle</span>
+                            Changes saved
+                        </span>
+<button class="bg-primary text-on-primary font-label-caps text-label-caps px-xl py-sm hover:opacity-90 active:scale-95 transition-all flex items-center gap-sm" onclick="handleSave()">
+                            Save Settings
+                        </button>
+</div>
+</div>
+<!-- Technical Aesthetics Decoration -->
+<div class="mt-xl grid grid-cols-3 gap-md opacity-20">
+<div class="h-24 bg-surface-container border border-outline-variant overflow-hidden relative">
+<div class="absolute inset-0 bg-gradient-to-t from-primary/10 to-transparent"></div>
+<div class="p-xs font-code-md text-[8px] uppercase">Node_Status_01</div>
+</div>
+<div class="h-24 bg-surface-container border border-outline-variant overflow-hidden relative">
+<div class="absolute top-1/2 left-0 w-full h-[1px] bg-primary"></div>
+<div class="p-xs font-code-md text-[8px] uppercase">Bus_Traffic</div>
+</div>
+<div class="h-24 bg-surface-container border border-outline-variant overflow-hidden relative">
+<div class="flex h-full items-end gap-[1px]">
+<div class="w-1 bg-primary h-2/3"></div>
+<div class="w-1 bg-primary h-1/2"></div>
+<div class="w-1 bg-primary h-5/6"></div>
+<div class="w-1 bg-primary h-1/3"></div>
+</div>
+<div class="p-xs font-code-md text-[8px] uppercase absolute top-0 left-0">Entropy_Dist</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Contextual Inspect Panel (Predicted Layout) -->
+<aside class="hidden lg:flex flex-col w-[320px] bg-surface-container-low border-l border-outline-variant p-md space-y-md shrink-0">
+<header class="font-label-caps text-label-caps text-on-surface-variant tracking-widest border-b border-outline-variant pb-xs">SYSTEM HEALTH</header>
+<div class="bg-surface-container-lowest p-sm border border-outline-variant relative overflow-hidden group">
+<div class="flex justify-between items-center mb-xs">
+<span class="font-body-sm text-body-sm text-on-surface">Memory Utilization</span>
+<span class="font-code-md text-code-md text-primary">42%</span>
+</div>
+<div class="w-full h-1 bg-surface-container-highest">
+<div class="h-full bg-primary" style="width: 42%"></div>
+</div>
+<div class="mt-sm flex justify-between font-label-caps text-[9px] text-on-surface-variant">
+<span>0 GB</span>
+<span>128 GB</span>
+</div>
+</div>
+<div class="space-y-xs">
+<header class="font-label-caps text-[9px] text-on-surface-variant opacity-60">ACTIVE WORKSPACE</header>
+<div class="bg-surface-container-highest/20 border-l-2 border-primary p-sm">
+<div class="font-body-md text-on-surface mb-base">Production_Cluster_Alpha</div>
+<div class="flex items-center gap-base">
+<span class="material-symbols-outlined scale-50 -ml-md">circle</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">14 active threads</span>
+</div>
+</div>
+</div>
+<div class="mt-auto">
+<div class="bg-error/5 border border-error/20 p-sm">
+<div class="flex items-center gap-xs text-error font-label-caps text-[10px] mb-xs">
+<span class="material-symbols-outlined text-[12px]">warning</span>
+                    System Alert
+                </div>
+<p class="font-body-sm text-[11px] text-on-surface-variant leading-tight">
+                    Vector indexing latency above 200ms. Consider increasing token budget or purging stale memory banks.
+                </p>
+</div>
+</div>
+</aside>
+<script>
+        function handleSave() {
+            const btn = event.currentTarget;
+            const status = document.getElementById('save-status');
+            
+            btn.innerHTML = '<span class="material-symbols-outlined animate-spin mr-xs">sync</span> Saving...';
+            btn.classList.add('opacity-80', 'pointer-events-none');
+            
+            setTimeout(() => {
+                btn.innerHTML = 'Save Settings';
+                btn.classList.remove('opacity-80', 'pointer-events-none');
+                
+                status.classList.remove('opacity-0');
+                setTimeout(() => {
+                    status.classList.add('opacity-0');
+                }, 3000);
+            }, 1000);
+        }
+
+        // Atmospheric Micro-interactions
+        document.querySelectorAll('input[type="range"]').forEach(slider => {
+            slider.addEventListener('input', () => {
+                slider.classList.add('opacity-100');
+            });
+        });
+    </script>
+</body></html>
