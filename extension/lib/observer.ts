@@ -154,6 +154,17 @@ export function startObserver(config: PlatformConfig): void {
   armCaptureGuard() // ignore the initial conversation backlog on first load
   const matched = !!document.querySelector(config.chatContainerSelector)
   console.log(`[Mnemosyne] observer started on ${config.platformName}; chat container ${matched ? "found" : "not found yet"}, observing document.body`)
+
+  // A single streamed answer adds/re-mounts the response element many times,
+  // which previously fired a capture per mutation. Coalesce: collect candidate
+  // response elements, then after the DOM goes quiet (settle window) capture
+  // only the most-recent one ONCE. `handled` guards against re-processing the
+  // same element on later mutations.
+  const handled = new WeakSet<Element>()
+  const pending = new Set<Element>()
+  let settleTimer: ReturnType<typeof setTimeout> | undefined
+  const SETTLE_MS = 1500
+
   observer = new MutationObserver((mutations) => {
     for (const m of mutations) {
       for (const node of Array.from(m.addedNodes)) {
@@ -161,13 +172,23 @@ export function startObserver(config: PlatformConfig): void {
           const target = node.matches(config.aiResponseSelector)
             ? node
             : node.querySelector(config.aiResponseSelector)
-          if (target) {
-            console.log("[Mnemosyne] AI response element detected")
-            void onNewResponse(target, config)
-          }
+          if (target && !handled.has(target)) pending.add(target)
         }
       }
     }
+    if (pending.size === 0) return
+    if (settleTimer) clearTimeout(settleTimer)
+    settleTimer = setTimeout(() => {
+      const els = Array.from(pending).filter((el) => el.isConnected)
+      pending.clear()
+      els.forEach((el) => handled.add(el))
+      // The last still-connected response is the complete one for this burst.
+      const latest = els[els.length - 1]
+      if (latest) {
+        console.log("[Mnemosyne] AI response settled — capturing once")
+        void onNewResponse(latest, config)
+      }
+    }, SETTLE_MS)
   })
   observer.observe(document.body, { childList: true, subtree: true })
 }
