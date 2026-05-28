@@ -116,6 +116,12 @@ class RetrievalService:
 
         add(self.nodes.get_by_importance(workspace_id, HIGH_IMPORTANCE_MIN), "high_importance", weights["high_importance"])
 
+        # Catch-all: EVERY active memory is eligible, not just goals/decisions/etc.
+        # Otherwise a workspace full of facts/tasks/entities injected almost nothing
+        # on a fresh chat (no hint). Ranking + the token budget below keep it ordered
+        # and bounded, so this just stops type-based exclusion — it doesn't flood.
+        add(self.nodes.get_active(workspace_id, limit=200), "memory", weights.get("high_importance", 1.0) * 0.5)
+
         # ---- filter conflicts (serve neither side) ---- #
         conflicted: set[str] = set()
         for c in self.conflicts.get_pending(workspace_id):
