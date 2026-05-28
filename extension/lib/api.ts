@@ -3,6 +3,7 @@
 // the engine degrades TLS on platforms where the cert can't be trusted.
 
 import type {
+  Brief,
   CapturePayload,
   CaptureResult,
   Conflict,
@@ -10,6 +11,7 @@ import type {
   HealthResponse,
   MemoryNode,
   PendingItem,
+  ProfileItem,
   UserSettings,
   Workspace,
 } from "~lib/types"
@@ -80,6 +82,10 @@ export class MnemosyneAPI {
     return this.req("POST", "/api/v1/workspaces", body)
   }
 
+  cleanupWorkspaces(): Promise<{ merged: { from: string; into_id: string; moved: number }[]; deleted_empty: string[] }> {
+    return this.req("POST", "/api/v1/workspaces/cleanup", {})
+  }
+
   listNodes(ws: string, params?: { type?: string; status?: string; search?: string; limit?: number }): Promise<{ nodes: MemoryNode[]; total: number }> {
     const q = new URLSearchParams()
     // Only set defined, non-empty values — otherwise URLSearchParams turns
@@ -118,6 +124,23 @@ export class MnemosyneAPI {
 
   getGraph(ws: string): Promise<{ nodes: unknown[]; edges: unknown[] }> {
     return this.req("GET", `/api/v1/workspaces/${ws}/graph`)
+  }
+
+  getBrief(ws: string): Promise<Brief> {
+    return this.req("GET", `/api/v1/workspaces/${ws}/brief`)
+  }
+
+  getProfile(): Promise<{ items: ProfileItem[] }> {
+    return this.req("GET", "/api/v1/profile")
+  }
+  addProfile(content: string): Promise<ProfileItem> {
+    return this.req("POST", "/api/v1/profile", { content })
+  }
+  updateProfile(id: string, content: string): Promise<unknown> {
+    return this.req("PUT", `/api/v1/profile/${id}`, { content })
+  }
+  deleteProfile(id: string): Promise<unknown> {
+    return this.req("DELETE", `/api/v1/profile/${id}`)
   }
 
   getSettings(): Promise<UserSettings> {
