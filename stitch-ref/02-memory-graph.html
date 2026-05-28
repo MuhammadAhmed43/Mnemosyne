@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Mnemosyne | Memory Graph</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&amp;family=JetBrains+Mono&amp;family=Geist:wght@600;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .graph-node:hover {
+            filter: drop-shadow(0 0 8px var(--tw-shadow-color));
+        }
+        .glass-panel {
+            background: rgba(28, 28, 28, 0.7);
+            backdrop-filter: blur(20px);
+        }
+        /* Custom scrollbar for technical feel */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #464554; border-radius: 2px; }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-secondary": "#313030",
+                        "error": "#ffb4ab",
+                        "background": "#121317",
+                        "on-background": "#e3e2e7",
+                        "tertiary": "#c8c6c5",
+                        "secondary-fixed-dim": "#c9c6c5",
+                        "surface-container-low": "#1a1b1f",
+                        "on-error-container": "#ffdad6",
+                        "on-secondary-fixed": "#1c1b1b",
+                        "on-secondary-fixed-variant": "#474646",
+                        "on-surface": "#e3e2e7",
+                        "tertiary-container": "#686767",
+                        "surface-container-highest": "#343539",
+                        "error-container": "#93000a",
+                        "outline": "#918f9f",
+                        "on-tertiary-container": "#e9e6e6",
+                        "surface-bright": "#38393d",
+                        "surface": "#121317",
+                        "on-primary-container": "#e7e4ff",
+                        "inverse-surface": "#e3e2e7",
+                        "surface-container-high": "#292a2e",
+                        "on-secondary-container": "#bab8b7",
+                        "outline-variant": "#464554",
+                        "on-primary-fixed": "#0c006a",
+                        "on-tertiary": "#313030",
+                        "secondary": "#c9c6c5",
+                        "on-primary-fixed-variant": "#3631b4",
+                        "secondary-container": "#4a4949",
+                        "primary": "#c2c1ff",
+                        "surface-dim": "#121317",
+                        "on-tertiary-fixed": "#1c1b1b",
+                        "primary-fixed": "#e2dfff",
+                        "primary-container": "#5856d6",
+                        "surface-container-lowest": "#0d0e12",
+                        "on-error": "#690005",
+                        "inverse-primary": "#4f4ccd",
+                        "on-primary": "#1c0b9f",
+                        "surface-tint": "#c2c1ff",
+                        "surface-container": "#1e1f23",
+                        "tertiary-fixed-dim": "#c8c6c5",
+                        "secondary-fixed": "#e5e2e1",
+                        "inverse-on-surface": "#2f3034",
+                        "on-tertiary-fixed-variant": "#474746",
+                        "on-surface-variant": "#c7c4d6",
+                        "primary-fixed-dim": "#c2c1ff",
+                        "surface-variant": "#343539",
+                        "tertiary-fixed": "#e5e2e1"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "md": "16px",
+                        "xl": "40px",
+                        "margin": "16px",
+                        "lg": "24px",
+                        "sm": "8px",
+                        "base": "4px",
+                        "xs": "4px",
+                        "gutter": "12px"
+                    },
+                    "fontFamily": {
+                        "body-sm": ["Inter"],
+                        "code-md": ["JetBrains Mono"],
+                        "headline-md": ["Geist"],
+                        "headline-lg": ["Geist"],
+                        "label-caps": ["Inter"],
+                        "body-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "body-sm": ["12px", {"lineHeight": "16px", "letterSpacing": "0", "fontWeight": "400"}],
+                        "code-md": ["13px", {"lineHeight": "18px", "letterSpacing": "0", "fontWeight": "400"}],
+                        "headline-md": ["18px", {"lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                        "headline-lg": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                        "label-caps": ["10px", {"lineHeight": "12px", "letterSpacing": "0.05em", "fontWeight": "700"}],
+                        "body-md": ["14px", {"lineHeight": "20px", "letterSpacing": "-0.01em", "fontWeight": "400"}]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-surface-container-lowest text-on-surface font-body-md selection:bg-primary selection:text-on-primary-container h-screen overflow-hidden flex">
+<!-- Sidebar Navigation (SideNavBar) -->
+<aside class="hidden md:flex flex-col h-full w-60 left-0 bg-surface-container-lowest border-r border-outline-variant py-md space-y-base shrink-0">
+<div class="px-md mb-lg">
+<div class="flex items-center gap-sm">
+<div class="w-8 h-8 bg-primary rounded flex items-center justify-center text-on-primary">
+<span class="material-symbols-outlined text-[20px]" data-icon="memory">memory</span>
+</div>
+<div>
+<h1 class="font-headline-md text-headline-md font-black text-on-surface tracking-tight">Mnemosyne</h1>
+<p class="font-label-caps text-[9px] text-outline uppercase tracking-widest leading-none">AI Persistent State</p>
+</div>
+</div>
+</div>
+<nav class="flex-1 px-sm space-y-base">
+<a class="text-on-surface-variant flex items-center px-md py-sm hover:bg-surface-container-highest/50 text-on-surface transition-all hover:translate-x-1 duration-200 group" href="#">
+<span class="material-symbols-outlined mr-md text-[18px]" data-icon="terminal">terminal</span>
+<span class="font-label-caps text-label-caps">Threads</span>
+</a>
+<a class="text-on-surface-variant flex items-center px-md py-sm hover:bg-surface-container-highest/50 text-on-surface transition-all hover:translate-x-1 duration-200 group" href="#">
+<span class="material-symbols-outlined mr-md text-[18px]" data-icon="memory">memory</span>
+<span class="font-label-caps text-label-caps">Memory Banks</span>
+</a>
+<a class="bg-secondary-container/30 text-primary border-r-2 border-primary flex items-center px-md py-sm hover:bg-surface-container-highest/50 transition-all hover:translate-x-1 duration-200" href="#">
+<span class="material-symbols-outlined mr-md text-[18px]" data-icon="insights">insights</span>
+<span class="font-label-caps text-label-caps">Analytics</span>
+</a>
+<a class="text-on-surface-variant flex items-center px-md py-sm hover:bg-surface-container-highest/50 text-on-surface transition-all hover:translate-x-1 duration-200 group" href="#">
+<span class="material-symbols-outlined mr-md text-[18px]" data-icon="token">token</span>
+<span class="font-label-caps text-label-caps">Workspace</span>
+</a>
+</nav>
+<div class="px-md">
+<button class="w-full bg-primary-container text-on-primary-container py-sm px-md rounded-lg font-label-caps text-label-caps flex items-center justify-center gap-sm hover:opacity-90 transition-opacity">
+<span class="material-symbols-outlined text-[16px]" data-icon="add">add</span>
+                New Thread
+            </button>
+</div>
+<div class="mt-auto px-sm space-y-base border-t border-outline-variant pt-md">
+<a class="text-on-surface-variant flex items-center px-md py-sm hover:bg-surface-container-highest/50 text-on-surface transition-all hover:translate-x-1 duration-200" href="#">
+<span class="material-symbols-outlined mr-md text-[18px]" data-icon="description">description</span>
+<span class="font-label-caps text-label-caps">Docs</span>
+</a>
+<a class="text-on-surface-variant flex items-center px-md py-sm hover:bg-surface-container-highest/50 text-on-surface transition-all hover:translate-x-1 duration-200" href="#">
+<span class="material-symbols-outlined mr-md text-[18px]" data-icon="cloud_done">cloud_done</span>
+<span class="font-label-caps text-label-caps">Status</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="flex-1 relative bg-background overflow-hidden flex flex-col">
+<!-- Top Navigation -->
+<header class="flex justify-between items-center w-full px-md h-12 bg-surface/80 backdrop-blur-xl border-b border-outline-variant z-50">
+<div class="flex items-center gap-md">
+<span class="font-headline-md text-headline-md font-bold text-on-surface tracking-tight">Graph View</span>
+<div class="h-4 w-[1px] bg-outline-variant"></div>
+<div class="flex items-center text-primary gap-xs">
+<span class="material-symbols-outlined text-[14px]" data-icon="check_circle" data-weight="fill" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span class="font-label-caps text-[10px]">Engine running</span>
+</div>
+</div>
+<div class="flex items-center gap-sm">
+<button class="p-2 text-on-surface-variant hover:bg-surface-container-high transition-colors rounded-lg">
+<span class="material-symbols-outlined text-[20px]" data-icon="notifications">notifications</span>
+</button>
+<button class="p-2 text-on-surface-variant hover:bg-surface-container-high transition-colors rounded-lg">
+<span class="material-symbols-outlined text-[20px]" data-icon="settings">settings</span>
+</button>
+<div class="w-8 h-8 rounded-full bg-surface-container overflow-hidden border border-outline-variant">
+<img alt="User avatar" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB_PjaY_ZWaW0PNTyFKqYDsob3yWHx5-i_AD_4t7f-u7c5S23aAn5jOGGWKfG-mFdTkvoBO0kicO5fe-Phl_Psce2_vR0yn5Snck3YZe4kzpMN4oE8ivsNydJnC3i_AGG5BQ8rc9H4wBCQXVJulR76_0_2jcBFHM60pBe2NnrJJkC_SBy1vA-fQJpz1c_yTi4uhELqoIDWqcITa_jJwnrlXR0aFc8UahalJZDquK61aZgmMHEQVQYTqYEH7H3bCVsLRNikUH34UZDQ"/>
+</div>
+</div>
+</header>
+<!-- Graph Workspace -->
+<div class="flex-1 relative cursor-grab active:cursor-grabbing overflow-hidden" id="graph-container">
+<!-- Background Grid -->
+<div class="absolute inset-0 pointer-events-none opacity-[0.03]" style="background-image: linear-gradient(#918f9f 1px, transparent 1px), linear-gradient(90deg, #918f9f 1px, transparent 1px); background-size: 40px 40px;"></div>
+<!-- SVG Connections Layer -->
+<svg class="absolute inset-0 w-full h-full pointer-events-none">
+<path d="M400 300 L600 450" stroke="#464554" stroke-dasharray="4" stroke-width="1.5"></path>
+<path d="M400 300 L250 500" stroke="#464554" stroke-dasharray="4" stroke-width="1.5"></path>
+<path d="M600 450 L850 380" stroke="#464554" stroke-dasharray="4" stroke-width="1.5"></path>
+<path d="M600 450 L700 650" stroke="#464554" stroke-dasharray="4" stroke-width="1.5"></path>
+</svg>
+<!-- Graph Nodes -->
+<div class="absolute inset-0" id="nodes-layer">
+<!-- Large Node: Project Context -->
+<div class="absolute top-[280px] left-[380px] group flex flex-col items-center">
+<div class="w-16 h-16 rounded-full bg-primary/20 border-2 border-primary flex items-center justify-center cursor-pointer shadow-lg shadow-primary/10 hover:scale-110 transition-transform graph-node" onclick="toggleDrawer(true)">
+<span class="material-symbols-outlined text-primary text-[32px]" data-icon="hub">hub</span>
+</div>
+<span class="mt-xs font-code-md text-code-md text-on-surface">Global_Context_v4</span>
+<span class="font-label-caps text-[9px] text-outline">PRIORITY: ALPHA</span>
+</div>
+<!-- Mid Node: User Preference -->
+<div class="absolute top-[430px] left-[580px] group flex flex-col items-center">
+<div class="w-12 h-12 rounded-full bg-secondary-container/50 border border-secondary flex items-center justify-center cursor-pointer hover:scale-110 transition-transform graph-node">
+<span class="material-symbols-outlined text-secondary text-[24px]" data-icon="person_outline">person_outline</span>
+</div>
+<span class="mt-xs font-code-md text-code-md text-on-surface-variant">User_Tone_Prefs</span>
+<div class="w-1 h-1 bg-green-400 mt-xs rounded-full"></div>
+</div>
+<!-- Small Node: Fact -->
+<div class="absolute top-[480px] left-[230px] group flex flex-col items-center">
+<div class="w-8 h-8 rounded-full bg-surface-container-high border border-outline flex items-center justify-center cursor-pointer hover:scale-110 transition-transform graph-node">
+<span class="material-symbols-outlined text-outline text-[16px]" data-icon="info">info</span>
+</div>
+<span class="mt-xs font-code-md text-[11px] text-on-surface-variant">API_Key_Status</span>
+</div>
+<!-- Fact Node -->
+<div class="absolute top-[360px] left-[830px] group flex flex-col items-center">
+<div class="w-10 h-10 rounded-full bg-surface-container-high border border-primary/40 flex items-center justify-center cursor-pointer hover:scale-110 transition-transform graph-node">
+<span class="material-symbols-outlined text-primary/60 text-[20px]" data-icon="data_object">data_object</span>
+</div>
+<span class="mt-xs font-code-md text-code-md text-on-surface-variant">Auth_Flow_History</span>
+</div>
+<!-- Decision Node -->
+<div class="absolute top-[630px] left-[680px] group flex flex-col items-center">
+<div class="w-10 h-10 rounded-full bg-error-container/30 border border-error/50 flex items-center justify-center cursor-pointer hover:scale-110 transition-transform graph-node">
+<span class="material-symbols-outlined text-error text-[20px]" data-icon="gavel">gavel</span>
+</div>
+<span class="mt-xs font-code-md text-code-md text-on-surface-variant">Arch_Decision_Log</span>
+</div>
+</div>
+<!-- UI Overlay: Top-Left Controls -->
+<div class="absolute top-md left-md flex flex-col gap-sm">
+<div class="flex gap-xs">
+<button class="h-8 px-md bg-primary text-on-primary font-label-caps text-label-caps rounded flex items-center gap-xs hover:opacity-90 active:scale-95 transition-all" onclick="toggleModal('add-memory-modal', true)">
+<span class="material-symbols-outlined text-[16px]" data-icon="add">add</span>
+                        Add Memory
+                    </button>
+<button class="h-8 px-sm bg-surface-container-high border border-outline-variant text-on-surface font-label-caps text-label-caps rounded flex items-center gap-xs hover:bg-surface-container-highest transition-colors">
+<span class="material-symbols-outlined text-[16px]" data-icon="refresh">refresh</span>
+                        Refresh
+                    </button>
+</div>
+<!-- Search/Filter Bar (Technical Density) -->
+<div class="flex items-center bg-surface-container-low border border-outline-variant rounded h-8 px-sm w-64">
+<span class="material-symbols-outlined text-outline text-[16px] mr-xs" data-icon="search">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-body-sm font-code-md w-full placeholder:text-outline-variant" placeholder="Query entities..." type="text"/>
+</div>
+</div>
+<!-- UI Overlay: Bottom-Left Legend -->
+<div class="absolute bottom-md left-md glass-panel border border-outline-variant p-sm rounded-lg min-w-[160px]">
+<h4 class="font-label-caps text-[9px] text-outline uppercase tracking-widest mb-sm">Legend</h4>
+<div class="space-y-base">
+<div class="flex items-center gap-sm">
+<div class="w-2 h-2 rounded-full bg-primary shadow-[0_0_4px_rgba(194,193,255,0.6)]"></div>
+<span class="text-body-sm text-on-surface-variant">Context Alpha</span>
+</div>
+<div class="flex items-center gap-sm">
+<div class="w-2 h-2 rounded-full bg-secondary"></div>
+<span class="text-body-sm text-on-surface-variant">User Profile</span>
+</div>
+<div class="flex items-center gap-sm">
+<div class="w-2 h-2 rounded-full bg-error"></div>
+<span class="text-body-sm text-on-surface-variant">Decisions</span>
+</div>
+<div class="flex items-center gap-sm">
+<div class="w-2 h-2 rounded-full bg-outline"></div>
+<span class="text-body-sm text-on-surface-variant">Static Facts</span>
+</div>
+</div>
+</div>
+<!-- Empty State (Hidden by default, shown if no nodes) -->
+<div class="hidden absolute inset-0 flex items-center justify-center flex-col text-center" id="empty-state">
+<div class="w-16 h-16 rounded-full border-2 border-dashed border-outline-variant flex items-center justify-center mb-md">
+<span class="material-symbols-outlined text-outline-variant text-[32px]" data-icon="memory_alt">memory_alt</span>
+</div>
+<h3 class="font-headline-md text-headline-md text-on-surface-variant">No memories in this workspace yet.</h3>
+<p class="font-body-sm text-outline mt-xs">Start building your agent's persistent state by adding a thread.</p>
+<button class="mt-lg px-md py-sm border border-primary text-primary font-label-caps text-label-caps rounded hover:bg-primary/10 transition-colors">Initialize State</button>
+</div>
+</div>
+</main>
+<!-- Node Detail Drawer (Right) -->
+<aside class="fixed top-0 right-0 h-full w-80 glass-panel border-l border-outline-variant z-[100] translate-x-full transition-transform duration-300 ease-in-out flex flex-col" id="node-detail-drawer">
+<div class="p-md border-b border-outline-variant flex justify-between items-center bg-surface-container-low">
+<h2 class="font-label-caps text-label-caps uppercase tracking-widest text-primary">Node Details</h2>
+<button class="text-outline hover:text-on-surface" onclick="toggleDrawer(false)">
+<span class="material-symbols-outlined" data-icon="close">close</span>
+</button>
+</div>
+<div class="flex-1 overflow-y-auto p-md space-y-lg">
+<!-- Header Identity -->
+<div class="space-y-xs">
+<div class="flex items-center justify-between">
+<span class="font-code-md text-[11px] text-primary bg-primary/10 px-xs py-[2px] rounded">ID: 0x98A...12</span>
+<span class="font-label-caps text-[10px] text-on-surface-variant bg-surface-container-highest px-xs py-[2px] rounded uppercase">DECISION</span>
+</div>
+<h3 class="font-headline-md text-headline-md font-bold">Global_Context_v4</h3>
+</div>
+<!-- Content Area -->
+<div class="bg-surface-container-lowest border border-outline-variant p-sm rounded-lg">
+<p class="font-body-sm text-on-surface-variant leading-relaxed">
+                    Persistent state established during session 812. Includes core operational parameters, system-wide constraints, and initialized agent personality traits.
+                </p>
+</div>
+<!-- Metadata Grid -->
+<div class="grid grid-cols-2 gap-sm">
+<div class="p-xs border border-outline-variant bg-surface-container-low rounded">
+<span class="block font-label-caps text-[9px] text-outline uppercase mb-[2px]">Importance</span>
+<div class="flex items-center gap-xs">
+<div class="flex-1 h-1 bg-surface-container-highest rounded">
+<div class="w-[90%] h-full bg-primary"></div>
+</div>
+<span class="font-code-md text-[11px]">0.92</span>
+</div>
+</div>
+<div class="p-xs border border-outline-variant bg-surface-container-low rounded">
+<span class="block font-label-caps text-[9px] text-outline uppercase mb-[2px]">Created</span>
+<span class="font-code-md text-[11px] text-on-surface">14m ago</span>
+</div>
+</div>
+<!-- Visualizer Card (Technical Density) -->
+<div class="rounded border border-outline-variant bg-surface-container-lowest overflow-hidden">
+<div class="bg-surface-container-highest px-sm py-xs border-b border-outline-variant flex justify-between items-center">
+<span class="font-label-caps text-[10px]">Vector Space Distribution</span>
+<span class="material-symbols-outlined text-[12px]" data-icon="open_in_new">open_in_new</span>
+</div>
+<div class="h-32 w-full bg-black/40 relative">
+<div class="absolute inset-0 flex items-center justify-center opacity-20">
+<img class="w-full h-full object-cover" data-alt="A technical visualization of a vector embedding space, showing dense clusters of dots in a 3D coordinate system. The color palette is dark charcoal, deep blues, and electric purple highlights. The aesthetics are inspired by high-end engineering software like MATLAB or visual IDEs, conveying a sense of complex data processing." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB_PjaY_ZWaW0PNTyFKqYDsob3yWHx5-i_AD_4t7f-u7c5S23aAn5jOGGWKfG-mFdTkvoBO0kicO5fe-Phl_Psce2_vR0yn5Snck3YZe4kzpMN4oE8ivsNydJnC3i_AGG5BQ8rc9H4wBCQXVJulR76_0_2jcBFHM60pBe2NnrJJkC_SBy1vA-fQJpz1c_yTi4uhELqoIDWqcITa_jJwnrlXR0aFc8UahalJZDquK61aZgmMHEQVQYTqYEH7H3bCVsLRNikUH34UZDQ"/>
+</div>
+<!-- Crosshair overlay -->
+<div class="absolute top-1/2 left-1/2 w-4 h-4 -translate-x-1/2 -translate-y-1/2 border border-primary/50 flex items-center justify-center">
+<div class="w-[1px] h-full bg-primary/30"></div>
+<div class="h-[1px] w-full bg-primary/30 absolute"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Footer Actions -->
+<div class="p-md bg-surface-container-low border-t border-outline-variant grid grid-cols-2 gap-sm">
+<button class="flex items-center justify-center gap-xs h-9 bg-surface-container-highest border border-outline-variant text-on-surface font-label-caps text-label-caps rounded hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined text-[16px]" data-icon="edit">edit</span>
+                Edit
+            </button>
+<button class="flex items-center justify-center gap-xs h-9 bg-primary-container/20 text-primary border border-primary/40 font-label-caps text-label-caps rounded hover:bg-primary-container/40 transition-colors">
+<span class="material-symbols-outlined text-[16px]" data-icon="bolt" data-weight="fill" style="font-variation-settings: 'FILL' 1;">bolt</span>
+                Boost
+            </button>
+<button class="flex items-center justify-center gap-xs h-9 bg-surface-container-highest border border-outline-variant text-on-surface font-label-caps text-label-caps rounded hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined text-[16px]" data-icon="move_up">move_up</span>
+                Move
+            </button>
+<button class="flex items-center justify-center gap-xs h-9 bg-error-container/20 text-error border border-error/30 font-label-caps text-label-caps rounded hover:bg-error-container/30 transition-colors">
+<span class="material-symbols-outlined text-[16px]" data-icon="delete">delete</span>
+                Delete
+            </button>
+</div>
+</aside>
+<!-- Add Memory Popover (Modal) -->
+<div class="hidden fixed inset-0 z-[200] flex items-center justify-center p-md" id="add-memory-modal">
+<div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="toggleModal('add-memory-modal', false)"></div>
+<div class="relative w-full max-w-md glass-panel border border-outline-variant rounded-xl shadow-2xl overflow-hidden scale-95 transition-transform duration-300">
+<div class="px-md py-sm bg-surface-container-low border-b border-outline-variant flex justify-between items-center">
+<h3 class="font-label-caps text-label-caps uppercase tracking-widest">Injection Protocol</h3>
+<button class="text-outline hover:text-on-surface transition-colors" onclick="toggleModal('add-memory-modal', false)">
+<span class="material-symbols-outlined" data-icon="close">close</span>
+</button>
+</div>
+<div class="p-md space-y-md">
+<div class="space-y-xs">
+<label class="font-label-caps text-[10px] text-outline uppercase">Content</label>
+<textarea class="w-full bg-surface-container-lowest border border-outline-variant focus:border-primary focus:ring-0 rounded p-sm text-body-md font-body-sm text-on-surface placeholder:text-outline-variant" placeholder="Enter memory state or factual observation..." rows="4"></textarea>
+</div>
+<div class="grid grid-cols-2 gap-md">
+<div class="space-y-xs">
+<label class="font-label-caps text-[10px] text-outline uppercase">Type</label>
+<select class="w-full bg-surface-container-lowest border border-outline-variant focus:border-primary focus:ring-0 rounded p-sm text-body-sm h-10">
+<option>Fact</option>
+<option>Decision</option>
+<option>User Pref</option>
+<option>Observation</option>
+</select>
+</div>
+<div class="space-y-xs">
+<label class="font-label-caps text-[10px] text-outline uppercase">Weight</label>
+<div class="flex items-center gap-sm h-10 px-sm bg-surface-container-lowest border border-outline-variant rounded">
+<input class="flex-1 accent-primary" type="range"/>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-sm py-sm">
+<input class="w-4 h-4 rounded border-outline-variant bg-surface-container text-primary focus:ring-0 focus:ring-offset-0" id="broadcast" type="checkbox"/>
+<label class="text-body-sm text-on-surface-variant" for="broadcast">Broadcast to connected threads</label>
+</div>
+<div class="pt-sm border-t border-outline-variant flex justify-end gap-sm">
+<button class="px-md py-sm text-on-surface font-label-caps text-label-caps hover:bg-surface-container-high rounded transition-colors" onclick="toggleModal('add-memory-modal', false)">Cancel</button>
+<button class="px-md py-sm bg-primary text-on-primary font-label-caps text-label-caps rounded shadow-lg shadow-primary/20 hover:opacity-90 active:scale-[0.98] transition-all">Confirm Injection</button>
+</div>
+</div>
+</div>
+</div>
+<script>
+        function toggleDrawer(show) {
+            const drawer = document.getElementById('node-detail-drawer');
+            if (show) {
+                drawer.classList.remove('translate-x-full');
+            } else {
+                drawer.classList.add('translate-x-full');
+            }
+        }
+
+        function toggleModal(id, show) {
+            const modal = document.getElementById(id);
+            if (show) {
+                modal.classList.remove('hidden');
+                setTimeout(() => {
+                    modal.querySelector('.scale-95').classList.remove('scale-95');
+                }, 10);
+            } else {
+                modal.querySelector('div').classList.add('scale-95');
+                setTimeout(() => {
+                    modal.classList.add('hidden');
+                }, 200);
+            }
+        }
+
+        // Lightweight atmospheric effect: subtle node drift
+        const nodes = document.querySelectorAll('.group');
+        nodes.forEach((node, i) => {
+            const speed = 0.2 + (i * 0.1);
+            let angle = Math.random() * Math.PI * 2;
+            
+            function drift() {
+                angle += 0.01;
+                const dx = Math.sin(angle) * 2;
+                const dy = Math.cos(angle) * 2;
+                node.style.transform = `translate(${dx}px, ${dy}px)`;
+                requestAnimationFrame(drift);
+            }
+            drift();
+        });
+
+        // Graph Panning Logic
+        const container = document.getElementById('graph-container');
+        let isDown = false;
+        let startX;
+        let startY;
+        let scrollLeft;
+        let scrollTop;
+
+        container.addEventListener('mousedown', (e) => {
+            if (e.target.closest('.graph-node')) return;
+            isDown = true;
+            startX = e.pageX;
+            startY = e.pageY;
+            container.style.cursor = 'grabbing';
+        });
+
+        container.addEventListener('mouseleave', () => {
+            isDown = false;
+            container.style.cursor = 'grab';
+        });
+
+        container.addEventListener('mouseup', () => {
+            isDown = false;
+            container.style.cursor = 'grab';
+        });
+
+        container.addEventListener('mousemove', (e) => {
+            if(!isDown) return;
+            e.preventDefault();
+            const x = e.pageX - container.offsetLeft;
+            const y = e.pageY - container.offsetTop;
+            // Simple visual feedback for pan (actual complex SVG pan would need viewbox logic)
+            const layer = document.getElementById('nodes-layer');
+            const svg = container.querySelector('svg');
+            const moveX = (e.pageX - startX);
+            const moveY = (e.pageY - startY);
+            // This is a simplified demo-only offset
+            layer.style.transform = `translate(${moveX}px, ${moveY}px)`;
+            svg.style.transform = `translate(${moveX}px, ${moveY}px)`;
+        });
+    </script>
+</body></html>
