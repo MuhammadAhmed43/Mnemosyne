@@ -45,7 +45,7 @@ class MnemosyneConfig(BaseModel):
 
     # Ollama (LLM extraction + embeddings)
     ollama_url: str = "http://localhost:11434"
-    ollama_model: str = "phi4-mini"  # LLM extraction pass only
+    ollama_model: str = "qwen2.5:7b-instruct"  # primary extraction/reasoning model
     embedding_model: str = "BAAI/bge-small-en-v1.5"  # fastembed, in-process
     embedding_dim: int = 384
     # Vector store: embedded/local Qdrant by default (zero setup, RAM-bound). Point
@@ -96,6 +96,12 @@ class MnemosyneConfig(BaseModel):
         env_qdrant = os.environ.get("QDRANT_URL")
         if env_qdrant:
             cfg.qdrant_url = env_qdrant
+        # Env override for the LLM model, so an existing config.json can't silently
+        # pin an old/weaker model (e.g. set MNEMOSYNE_OLLAMA_MODEL=qwen2.5:3b-instruct
+        # to trade some recall for speed).
+        env_model = os.environ.get("MNEMOSYNE_OLLAMA_MODEL")
+        if env_model:
+            cfg.ollama_model = env_model
         return cfg
 
     @classmethod
