@@ -12,6 +12,12 @@ from backend.utils.time import now_utc
 router = APIRouter(prefix="/api/v1", tags=["extras"], dependencies=[Depends(verify_token)])
 
 
+@router.get("/workspaces/{workspace_id}/brief")
+async def brief(workspace_id: str, request: Request) -> dict:
+    """The living brief: the workspace's current truth, grouped into sections."""
+    return request.app.state.container.graph_service(workspace_id).build_brief(workspace_id)
+
+
 @router.get("/workspaces/{workspace_id}/snapshot")
 async def snapshot(workspace_id: str, request: Request) -> Response:
     md = request.app.state.container.snapshot_service(workspace_id).export_markdown(workspace_id)
