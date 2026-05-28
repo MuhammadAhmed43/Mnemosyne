@@ -36,4 +36,17 @@ async def get_context(
         ws = active[0].id if active else ""
     if not ws:
         return ContextResult(workspace_id="", workspace_name="", context_string="")
-    return c.retrieval_service(ws).get_context(ws, hint, platform.value, token_budget)
+    result = c.retrieval_service(ws).get_context(ws, hint, platform.value, token_budget)
+
+    # Prepend the global About-Me so every chat starts knowing who the user is
+    # (cross-project, never re-explained). Only when there's project context to
+    # attach it to, so an empty workspace doesn't inject a bare profile.
+    try:
+        profile = c.profile_repo().as_context_lines(limit=20)
+    except Exception:  # noqa: BLE001
+        profile = []
+    if profile and result.context_string:
+        about = "[ABOUT ME]\n" + "\n".join(f"- {p}" for p in profile)
+        result.context_string = f"{about}\n\n{result.context_string}"
+        result.token_count += max(1, len(about) // 4)
+    return result
