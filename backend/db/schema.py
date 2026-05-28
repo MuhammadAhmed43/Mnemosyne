@@ -84,6 +84,18 @@ def create_global_schema(conn: sqlite3.Connection) -> None:
             created_at   TEXT NOT NULL
         );
 
+        -- Global "about me" memory: who the user is / how they work. Cross-project,
+        -- injected into every chat alongside the active workspace's brief.
+        CREATE TABLE IF NOT EXISTS profile_memories (
+            id         TEXT PRIMARY KEY,
+            content    TEXT NOT NULL,
+            kind       TEXT DEFAULT 'fact',
+            source     TEXT DEFAULT 'user',
+            pinned     INTEGER NOT NULL DEFAULT 0,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+        );
+
         CREATE TABLE IF NOT EXISTS onboarding_state (
             key        TEXT PRIMARY KEY,
             value      TEXT NOT NULL,
