@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&amp;family=JetBrains+Mono&amp;family=Geist:wght@400;600;900&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-secondary": "#313030",
+                      "error": "#ffb4ab",
+                      "background": "#121317",
+                      "on-background": "#e3e2e7",
+                      "tertiary": "#c8c6c5",
+                      "secondary-fixed-dim": "#c9c6c5",
+                      "surface-container-low": "#1a1b1f",
+                      "on-error-container": "#ffdad6",
+                      "on-secondary-fixed": "#1c1b1b",
+                      "on-secondary-fixed-variant": "#474646",
+                      "on-surface": "#e3e2e7",
+                      "tertiary-container": "#686767",
+                      "surface-container-highest": "#343539",
+                      "error-container": "#93000a",
+                      "outline": "#918f9f",
+                      "on-tertiary-container": "#e9e6e6",
+                      "surface-bright": "#38393d",
+                      "surface": "#121317",
+                      "on-primary-container": "#e7e4ff",
+                      "inverse-surface": "#e3e2e7",
+                      "surface-container-high": "#292a2e",
+                      "on-secondary-container": "#bab8b7",
+                      "outline-variant": "#464554",
+                      "on-primary-fixed": "#0c006a",
+                      "on-tertiary": "#313030",
+                      "secondary": "#c9c6c5",
+                      "on-primary-fixed-variant": "#3631b4",
+                      "secondary-container": "#4a4949",
+                      "primary": "#c2c1ff",
+                      "surface-dim": "#121317",
+                      "on-tertiary-fixed": "#1c1b1b",
+                      "primary-fixed": "#e2dfff",
+                      "primary-container": "#5856d6",
+                      "surface-container-lowest": "#0d0e12",
+                      "on-error": "#690005",
+                      "inverse-primary": "#4f4ccd",
+                      "on-primary": "#1c0b9f",
+                      "surface-tint": "#c2c1ff",
+                      "surface-container": "#1e1f23",
+                      "tertiary-fixed-dim": "#c8c6c5",
+                      "secondary-fixed": "#e5e2e1",
+                      "inverse-on-surface": "#2f3034",
+                      "on-tertiary-fixed-variant": "#474746",
+                      "on-surface-variant": "#c7c4d6",
+                      "primary-fixed-dim": "#c2c1ff",
+                      "surface-variant": "#343539",
+                      "tertiary-fixed": "#e5e2e1"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "md": "16px",
+                      "xl": "40px",
+                      "margin": "16px",
+                      "lg": "24px",
+                      "sm": "8px",
+                      "base": "4px",
+                      "xs": "4px",
+                      "gutter": "12px"
+              },
+              "fontFamily": {
+                      "body-sm": ["Inter"],
+                      "code-md": ["JetBrains Mono"],
+                      "headline-md": ["Geist"],
+                      "headline-lg": ["Geist"],
+                      "label-caps": ["Inter"],
+                      "body-md": ["Inter"]
+              },
+              "fontSize": {
+                      "body-sm": ["12px", {"lineHeight": "16px", "letterSpacing": "0", "fontWeight": "400"}],
+                      "code-md": ["13px", {"lineHeight": "18px", "letterSpacing": "0", "fontWeight": "400"}],
+                      "headline-md": ["18px", {"lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                      "headline-lg": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                      "label-caps": ["10px", {"lineHeight": "12px", "letterSpacing": "0.05em", "fontWeight": "700"}],
+                      "body-md": ["14px", {"lineHeight": "20px", "letterSpacing": "-0.01em", "fontWeight": "400"}]
+              }
+            },
+          },
+        }
+    </script>
+<style>
+        body {
+            background-color: #0A0A0A;
+            color: #e3e2e7;
+            overflow: hidden;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
+            font-size: 18px;
+        }
+        .glass-panel {
+            background: rgba(28, 28, 28, 0.6);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(70, 69, 84, 0.4);
+        }
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+    </style>
+</head>
+<body class="font-body-md text-body-md antialiased">
+<!-- Background Simulation (Canvas) -->
+<div class="fixed inset-0 z-0 flex items-center justify-center pointer-events-none opacity-20">
+<div class="grid grid-cols-12 gap-base w-full max-w-6xl px-xl">
+<div class="col-span-8 h-[600px] border border-outline-variant rounded-lg bg-surface-container-lowest p-md">
+<div class="w-1/3 h-4 bg-outline-variant mb-sm rounded"></div>
+<div class="w-full h-px bg-outline-variant mb-md"></div>
+<div class="space-y-sm">
+<div class="h-3 w-full bg-surface-variant rounded"></div>
+<div class="h-3 w-5/6 bg-surface-variant rounded"></div>
+<div class="h-3 w-full bg-surface-variant rounded"></div>
+<div class="h-3 w-4/6 bg-surface-variant rounded"></div>
+</div>
+</div>
+<div class="col-span-4 h-[400px] border border-outline-variant rounded-lg bg-surface-container-lowest p-md">
+<div class="h-full w-full bg-surface-variant rounded opacity-50"></div>
+</div>
+</div>
+</div>
+<!-- MAIN INTERFACE: Floating Context Bar -->
+<div class="fixed top-xl left-1/2 -translate-x-1/2 w-full max-w-[760px] z-50 flex flex-col gap-sm px-md">
+<!-- Context Bar Main Row -->
+<div class="glass-panel flex items-center h-[44px] px-sm rounded-xl shadow-2xl transition-all duration-300" id="main-context-bar">
+<!-- Brand & Workspace -->
+<div class="flex items-center gap-sm mr-auto pl-xs">
+<span class="font-headline-md text-headline-md font-black text-on-surface tracking-tighter">Mnemosyne</span>
+<div class="h-4 w-px bg-outline-variant mx-xs"></div>
+<button class="flex items-center gap-xs px-sm py-1 rounded bg-surface-container-high hover:bg-surface-container-highest transition-colors">
+<span class="font-label-caps text-label-caps uppercase text-on-surface-variant">General</span>
+<span class="material-symbols-outlined text-[14px]">expand_more</span>
+</button>
+</div>
+<!-- Stats Label -->
+<div class="flex items-center px-md">
+<span class="font-body-sm text-body-sm text-on-surface-variant whitespace-nowrap">12 items · 450 tokens</span>
+</div>
+<!-- Action Cluster -->
+<div class="flex items-center gap-xs">
+<button class="h-[28px] px-sm font-label-caps text-label-caps text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high rounded transition-all">Auto</button>
+<button class="h-[28px] px-sm font-label-caps text-label-caps text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high rounded transition-all">Pause</button>
+<button class="h-[28px] px-sm font-label-caps text-label-caps text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high rounded transition-all flex items-center gap-xs" id="toggle-expanded">
+                    Show
+                    <span class="material-symbols-outlined text-[14px]">keyboard_arrow_down</span>
+</button>
+<div class="h-4 w-px bg-outline-variant mx-xs"></div>
+<button class="h-[28px] px-md font-label-caps text-label-caps bg-primary text-on-primary rounded font-bold hover:opacity-90 active:scale-[0.98] transition-all whitespace-nowrap">
+                    Insert into prompt
+                </button>
+<button class="w-[28px] h-[28px] flex items-center justify-center text-on-surface-variant hover:text-error transition-colors">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+</div>
+<!-- Expanded Panel (Collapsible) -->
+<div class="hidden glass-panel rounded-xl overflow-hidden transition-all duration-300 border-t-0 -mt-2 pt-2" id="expanded-panel">
+<div class="p-md bg-surface-container-lowest/50">
+<div class="flex items-center justify-between mb-sm">
+<span class="font-label-caps text-label-caps text-on-surface-variant">Active Context Buffer</span>
+<span class="font-code-md text-code-md text-primary">0.45k / 128k</span>
+</div>
+<div class="font-code-md text-code-md text-on-surface-variant h-40 overflow-y-auto scrollbar-hide bg-black/40 p-sm rounded border border-outline-variant/30 leading-relaxed">
+<div class="flex gap-sm border-l-2 border-primary pl-sm mb-xs">
+<span class="opacity-30">001</span>
+<span class="text-on-surface">TYPE: Decision</span>
+<span class="text-outline-variant">// Memory index established at runtime</span>
+</div>
+<div class="flex gap-sm border-l-2 border-secondary pl-sm mb-xs">
+<span class="opacity-30">002</span>
+<span class="text-on-surface">FACT: User prefers "Dark-First" strategy in UI.</span>
+</div>
+<div class="flex gap-sm border-l-2 border-primary pl-sm mb-xs">
+<span class="opacity-30">003</span>
+<span class="text-on-surface">TYPE: Dependency</span>
+<span class="text-outline-variant">"JetBrains Mono" linked to code blocks.</span>
+</div>
+<div class="flex gap-sm border-l-2 border-tertiary pl-sm mb-xs">
+<span class="opacity-30">004</span>
+<span class="text-on-surface">REF: Project Mnemosyne State Engine v4.0.2</span>
+</div>
+<div class="flex gap-sm border-l-2 border-primary pl-sm mb-xs">
+<span class="opacity-30">005</span>
+<span class="text-on-surface">STATE: Engine running, no errors reported.</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Offline Variant Bar (Secondary Toast style) -->
+<div class="mt-base flex items-center justify-between px-md py-base rounded-lg bg-error-container text-on-error-container border border-error/30 animate-pulse transition-all" id="offline-bar">
+<div class="flex items-center gap-sm">
+<span class="material-symbols-outlined text-[16px]">signal_disconnected</span>
+<span class="font-label-caps text-label-caps">Mnemosyne engine is offline</span>
+<span class="h-3 w-px bg-on-error-container/20"></span>
+<button class="font-body-sm text-body-sm underline opacity-80 hover:opacity-100 transition-opacity">start local app</button>
+</div>
+<button class="material-symbols-outlined text-[16px] hover:opacity-70" onclick="document.getElementById('offline-bar').remove()">close</button>
+</div>
+</div>
+<!-- UI Background Decoration to simulate a tool environment -->
+<div class="fixed bottom-0 left-0 right-0 h-10 glass-panel border-t border-outline-variant flex items-center justify-between px-md">
+<div class="flex items-center gap-md">
+<span class="material-symbols-outlined text-primary" data-weight="fill">terminal</span>
+<span class="font-label-caps text-label-caps text-on-surface-variant">REPL ACTIVE</span>
+</div>
+<div class="flex items-center gap-md">
+<span class="font-code-md text-code-md opacity-40">UTF-8</span>
+<span class="font-code-md text-code-md opacity-40">JS (Mnemosyne-Core)</span>
+</div>
+</div>
+<script>
+        const toggleBtn = document.getElementById('toggle-expanded');
+        const expandedPanel = document.getElementById('expanded-panel');
+        const mainBar = document.getElementById('main-context-bar');
+
+        let isOpen = false;
+
+        toggleBtn.addEventListener('click', () => {
+            isOpen = !isOpen;
+            if (isOpen) {
+                expandedPanel.classList.remove('hidden');
+                toggleBtn.querySelector('.material-symbols-outlined').style.transform = 'rotate(180deg)';
+                mainBar.classList.remove('rounded-xl');
+                mainBar.classList.add('rounded-t-xl');
+            } else {
+                expandedPanel.classList.add('hidden');
+                toggleBtn.querySelector('.material-symbols-outlined').style.transform = 'rotate(0deg)';
+                mainBar.classList.remove('rounded-t-xl');
+                mainBar.classList.add('rounded-xl');
+            }
+        });
+
+        // Add a subtle drift effect to the bar on hover
+        mainBar.addEventListener('mousemove', (e) => {
+            const rect = mainBar.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            const xPercent = (x / rect.width - 0.5) * 2;
+            const yPercent = (y / rect.height - 0.5) * 2;
+            
+            mainBar.style.transform = `perspective(1000px) rotateX(${yPercent * 1}deg) rotateY(${xPercent * 1}deg) translateY(${yPercent * -1}px)`;
+        });
+
+        mainBar.addEventListener('mouseleave', () => {
+            mainBar.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) translateY(0px)';
+        });
+    </script>
+</body></html>
