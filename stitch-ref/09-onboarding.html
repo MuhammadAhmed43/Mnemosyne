@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&amp;family=JetBrains+Mono&amp;family=Geist:wght@600;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-secondary": "#313030",
+                        "error": "#ffb4ab",
+                        "background": "#121317",
+                        "on-background": "#e3e2e7",
+                        "tertiary": "#c8c6c5",
+                        "secondary-fixed-dim": "#c9c6c5",
+                        "surface-container-low": "#1a1b1f",
+                        "on-error-container": "#ffdad6",
+                        "on-secondary-fixed": "#1c1b1b",
+                        "on-secondary-fixed-variant": "#474646",
+                        "on-surface": "#e3e2e7",
+                        "tertiary-container": "#686767",
+                        "surface-container-highest": "#343539",
+                        "error-container": "#93000a",
+                        "outline": "#918f9f",
+                        "on-tertiary-container": "#e9e6e6",
+                        "surface-bright": "#38393d",
+                        "surface": "#121317",
+                        "on-primary-container": "#e7e4ff",
+                        "inverse-surface": "#e3e2e7",
+                        "surface-container-high": "#292a2e",
+                        "on-secondary-container": "#bab8b7",
+                        "outline-variant": "#464554",
+                        "on-primary-fixed": "#0c006a",
+                        "on-tertiary": "#313030",
+                        "secondary": "#c9c6c5",
+                        "on-primary-fixed-variant": "#3631b4",
+                        "secondary-container": "#4a4949",
+                        "primary": "#c2c1ff",
+                        "surface-dim": "#121317",
+                        "on-tertiary-fixed": "#1c1b1b",
+                        "primary-fixed": "#e2dfff",
+                        "primary-container": "#5856d6",
+                        "surface-container-lowest": "#0d0e12",
+                        "on-error": "#690005",
+                        "inverse-primary": "#4f4ccd",
+                        "on-primary": "#1c0b9f",
+                        "surface-tint": "#c2c1ff",
+                        "surface-container": "#1e1f23",
+                        "tertiary-fixed-dim": "#c8c6c5",
+                        "secondary-fixed": "#e5e2e1",
+                        "inverse-on-surface": "#2f3034",
+                        "on-tertiary-fixed-variant": "#474746",
+                        "on-surface-variant": "#c7c4d6",
+                        "primary-fixed-dim": "#c2c1ff",
+                        "surface-variant": "#343539",
+                        "tertiary-fixed": "#e5e2e1"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "md": "16px",
+                        "xl": "40px",
+                        "margin": "16px",
+                        "lg": "24px",
+                        "sm": "8px",
+                        "base": "4px",
+                        "xs": "4px",
+                        "gutter": "12px"
+                    },
+                    "fontFamily": {
+                        "body-sm": ["Inter"],
+                        "code-md": ["JetBrains Mono"],
+                        "headline-md": ["Geist"],
+                        "headline-lg": ["Geist"],
+                        "label-caps": ["Inter"],
+                        "body-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "body-sm": ["12px", {"lineHeight": "16px", "letterSpacing": "0", "fontWeight": "400"}],
+                        "code-md": ["13px", {"lineHeight": "18px", "letterSpacing": "0", "fontWeight": "400"}],
+                        "headline-md": ["18px", {"lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                        "headline-lg": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                        "label-caps": ["10px", {"lineHeight": "12px", "letterSpacing": "0.05em", "fontWeight": "700"}],
+                        "body-md": ["14px", {"lineHeight": "20px", "letterSpacing": "-0.01em", "fontWeight": "400"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body { background-color: #0A0A0A; }
+        .onboarding-card { border: 1px solid #262626; box-shadow: 0 0 40px rgba(0,0,0,0.5); }
+        .glass-panel { background: rgba(28, 28, 28, 0.7); backdrop-filter: blur(20px); }
+        .step-transition { transition: opacity 0.3s ease, transform 0.3s ease; }
+        .hidden-step { display: none; opacity: 0; transform: translateY(10px); }
+        .active-step { display: block; opacity: 1; transform: translateY(0); }
+        .waiting-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .4; } }
+        .scanline {
+            width: 100%;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, #c2c1ff, transparent);
+            position: absolute;
+            top: 0;
+            animation: scan 3s linear infinite;
+        }
+        @keyframes scan { 0% { top: 0; } 100% { top: 100%; } }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen text-on-surface font-body-md overflow-hidden">
+<!-- Background Atmospheric Effect -->
+<div class="fixed inset-0 pointer-events-none opacity-20">
+<div class="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,_#5856d6_0%,_transparent_50%)]"></div>
+</div>
+<!-- Main Onboarding Container -->
+<main class="w-full max-w-[520px] px-md relative z-10">
+<div class="onboarding-card bg-surface-container-lowest rounded-lg p-xl relative overflow-hidden">
+<!-- Subtle Scanline -->
+<div class="scanline opacity-10"></div>
+<!-- Step 1: Brand Introduction -->
+<section class="step-transition active-step space-y-lg" id="step-1">
+<div class="flex flex-col items-center text-center">
+<div class="w-16 h-16 bg-primary-container flex items-center justify-center rounded-lg mb-md">
+<span class="material-symbols-outlined text-[32px] text-white" style="font-variation-settings: 'FILL' 1;">memory</span>
+</div>
+<h1 class="font-headline-lg text-headline-lg tracking-tighter text-on-surface">Mnemosyne</h1>
+<p class="font-label-caps text-label-caps text-primary uppercase tracking-[0.2em] mt-base">Persistent AI State Engine</p>
+</div>
+<div class="h-px bg-outline-variant w-full"></div>
+<div class="space-y-md">
+<p class="text-on-surface-variant font-body-md leading-relaxed">
+                        Mnemosyne acts as a long-term memory layer for your AI workflows. It captures, indexes, and retrieves contextual state across disparate threads to ensure zero loss of technical context.
+                    </p>
+</div>
+<button class="w-full h-8 bg-primary text-on-primary font-label-caps text-label-caps flex items-center justify-center hover:opacity-90 transition-opacity active:scale-[0.98]" onclick="nextStep(2)">
+                    GET STARTED
+                </button>
+</section>
+<!-- Step 2: Engine Installation -->
+<section class="step-transition hidden-step space-y-lg" id="step-2">
+<div class="flex items-center justify-between">
+<h2 class="font-headline-md text-headline-md">Install Local Engine</h2>
+<span class="font-code-md text-body-sm text-outline">STP_02</span>
+</div>
+<div class="bg-surface-container p-md border border-outline-variant rounded-lg space-y-md">
+<div class="flex items-center space-y-sm flex-col py-lg" id="engine-status">
+<div class="w-10 h-10 border-2 border-primary/20 border-t-primary rounded-full animate-spin" id="indicator-spinner"></div>
+<div class="hidden w-10 h-10 bg-primary/20 text-primary flex items-center justify-center rounded-full" id="indicator-success">
+<span class="material-symbols-outlined">check</span>
+</div>
+<p class="font-code-md text-body-sm waiting-pulse" id="status-text">Provisioning local node...</p>
+</div>
+</div>
+<div class="bg-surface-container-low p-sm flex items-center gap-md border-l-2 border-primary">
+<span class="material-symbols-outlined text-primary text-[20px]">terminal</span>
+<p class="font-code-md text-body-sm text-on-surface-variant">Waiting for handshake on port 8080</p>
+</div>
+<button class="w-full h-8 bg-surface-container-highest text-outline font-label-caps text-label-caps flex items-center justify-center cursor-not-allowed opacity-50" disabled="" id="step-2-btn">
+                    CONTINUE
+                </button>
+</section>
+<!-- Step 3: Workspace Configuration -->
+<section class="step-transition hidden-step space-y-lg" id="step-3">
+<div class="space-y-base">
+<h2 class="font-headline-md text-headline-md">What are you working on?</h2>
+<p class="text-on-surface-variant text-body-sm">Configure your primary memory domain.</p>
+</div>
+<div class="space-y-md">
+<div>
+<label class="font-label-caps text-label-caps text-on-surface-variant block mb-base">WORKSPACE NAME</label>
+<input class="w-full bg-surface-container text-on-surface border-outline-variant border focus:border-primary focus:ring-0 font-body-md px-md py-sm rounded-lg outline-none transition-all" id="workspace-name" placeholder="e.g. Project 'Acheron'" type="text"/>
+</div>
+<div>
+<label class="font-label-caps text-label-caps text-on-surface-variant block mb-base">PRIMARY CONTEXT</label>
+<textarea class="w-full bg-surface-container text-on-surface border-outline-variant border focus:border-primary focus:ring-0 font-body-md px-md py-sm rounded-lg outline-none h-24 resize-none transition-all" placeholder="e.g. Architecting a distributed vector database using Rust..."></textarea>
+<div class="flex flex-wrap gap-xs mt-base">
+<span class="bg-surface-container-high text-on-surface-variant text-[10px] px-sm py-xs font-code-md border border-outline-variant">SYSTEM_ARCH</span>
+<span class="bg-surface-container-high text-on-surface-variant text-[10px] px-sm py-xs font-code-md border border-outline-variant">PROTOCOLS</span>
+<span class="bg-surface-container-high text-on-surface-variant text-[10px] px-sm py-xs font-code-md border border-outline-variant">TYPESCRIPT</span>
+</div>
+</div>
+</div>
+<button class="w-full h-8 bg-primary text-on-primary font-label-caps text-label-caps flex items-center justify-center hover:opacity-90 transition-opacity" onclick="nextStep(4)">
+                    CREATE WORKSPACE
+                </button>
+</section>
+<!-- Step 4: Final Success -->
+<section class="step-transition hidden-step space-y-lg" id="step-4">
+<div class="flex flex-col items-center py-lg text-center space-y-md">
+<div class="w-16 h-16 bg-primary/10 border border-primary text-primary flex items-center justify-center rounded-full mb-md">
+<span class="material-symbols-outlined text-[32px]">check_circle</span>
+</div>
+<div class="space-y-xs">
+<h2 class="font-headline-lg text-headline-lg text-on-surface" id="display-name">Workspace ready</h2>
+<p class="text-on-surface-variant text-body-md">Synchronization bridge established successfully.</p>
+</div>
+</div>
+<div class="bg-surface-container p-md border border-outline-variant rounded-lg">
+<p class="text-body-sm text-on-surface-variant italic text-center">
+                        "Your persistent state will now follow you through the LLM session."
+                    </p>
+</div>
+<div class="space-y-sm pt-md">
+<a class="w-full h-8 bg-primary text-on-primary font-label-caps text-label-caps flex items-center justify-center hover:opacity-90 transition-opacity gap-sm" href="https://claude.ai">
+                        OPEN CLAUDE.AI <span class="material-symbols-outlined text-[16px]">open_in_new</span>
+</a>
+<button class="w-full h-8 bg-transparent text-outline font-label-caps text-label-caps flex items-center justify-center hover:text-on-surface transition-colors">
+                        VIEW DASHBOARD
+                    </button>
+</div>
+</section>
+<!-- Progress Indicator -->
+<div class="flex justify-center gap-sm mt-xl">
+<div class="w-1.5 h-1.5 bg-primary transition-all duration-300" id="dot-1"></div>
+<div class="w-1.5 h-1.5 bg-outline-variant transition-all duration-300" id="dot-2"></div>
+<div class="w-1.5 h-1.5 bg-outline-variant transition-all duration-300" id="dot-3"></div>
+<div class="w-1.5 h-1.5 bg-outline-variant transition-all duration-300" id="dot-4"></div>
+</div>
+</div>
+<!-- Meta Footer -->
+<div class="mt-md flex justify-between items-center px-sm">
+<span class="text-[10px] font-code-md text-outline opacity-50 uppercase tracking-widest">Build 1.0.42-Stable</span>
+<div class="flex gap-md">
+<span class="text-[10px] font-code-md text-outline opacity-50 uppercase cursor-pointer hover:opacity-100">Docs</span>
+<span class="text-[10px] font-code-md text-outline opacity-50 uppercase cursor-pointer hover:opacity-100">Support</span>
+</div>
+</div>
+</main>
+<script>
+        let currentStep = 1;
+
+        function nextStep(step) {
+            // Hide current
+            document.getElementById(`step-${currentStep}`).classList.remove('active-step');
+            document.getElementById(`step-${currentStep}`).classList.add('hidden-step');
+            
+            // Show new
+            currentStep = step;
+            const nextEl = document.getElementById(`step-${currentStep}`);
+            nextEl.classList.remove('hidden-step');
+            
+            // Small timeout for reflow before opacity change
+            setTimeout(() => {
+                nextEl.classList.add('active-step');
+            }, 50);
+
+            // Update dots
+            for(let i=1; i<=4; i++) {
+                const dot = document.getElementById(`dot-${i}`);
+                if(i <= step) {
+                    dot.classList.remove('bg-outline-variant');
+                    dot.classList.add('bg-primary');
+                } else {
+                    dot.classList.add('bg-outline-variant');
+                    dot.classList.remove('bg-primary');
+                }
+            }
+
+            // Custom Logic per step
+            if(step === 2) {
+                simulateEngineInstall();
+            }
+            if(step === 4) {
+                const name = document.getElementById('workspace-name').value || 'Workspace';
+                document.getElementById('display-name').innerText = `${name} ready`;
+            }
+        }
+
+        function simulateEngineInstall() {
+            setTimeout(() => {
+                document.getElementById('indicator-spinner').classList.add('hidden');
+                document.getElementById('indicator-success').classList.remove('hidden');
+                document.getElementById('status-text').innerText = "Engine running · v1.0.0";
+                document.getElementById('status-text').classList.remove('waiting-pulse');
+                document.getElementById('status-text').classList.add('text-primary');
+                
+                const btn = document.getElementById('step-2-btn');
+                btn.disabled = false;
+                btn.classList.remove('bg-surface-container-highest', 'text-outline', 'cursor-not-allowed', 'opacity-50');
+                btn.classList.add('bg-primary', 'text-on-primary', 'hover:opacity-90');
+                btn.setAttribute('onclick', 'nextStep(3)');
+            }, 2500);
+        }
+    </script>
+</body></html>
