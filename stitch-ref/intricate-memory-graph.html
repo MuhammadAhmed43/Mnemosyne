@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Mnemosyne | Memory Graph</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&amp;family=JetBrains+Mono&amp;family=Geist:wght@600;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        
+        /* Obsidian-style Graph Aesthetics */
+        .obsidian-bg {
+            background-color: #1c1c1e;
+        }
+
+        .graph-node-circle {
+            transition: all 0.3s ease;
+            border-radius: 50%;
+        }
+
+        .graph-node-label {
+            transition: opacity 0.3s ease;
+            color: #d4d4d8;
+        }
+
+        /* Hover Spotlight Effect */
+        .graph-container:has(.group:hover) .group:not(:hover) {
+            opacity: 0.2;
+            filter: blur(1px);
+        }
+        
+        .graph-container:has(.group:hover) .graph-edge {
+            opacity: 0.1;
+        }
+
+        /* Minimalist dots */
+        .node-alpha { background-color: #ffffff; }
+        .node-pref { background-color: #e4e4e7; }
+        .node-fact { background-color: #a1a1aa; } 
+        .node-decision { background-color: #d4d4d8; } 
+        
+        /* Delicate edges */
+        .graph-edge {
+            stroke: rgba(255, 255, 255, 0.15);
+            stroke-width: 0.5;
+            transition: all 0.3s ease;
+        }
+        
+        .glass-panel {
+            background: rgba(28, 28, 30, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(70, 69, 84, 0.5);
+        }
+        
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #464554; border-radius: 2px; }
+
+        @keyframes drift1 { 0% { transform: translate(0,0); } 50% { transform: translate(10px, 15px); } 100% { transform: translate(0,0); } }
+        @keyframes drift2 { 0% { transform: translate(0,0); } 50% { transform: translate(-12px, 8px); } 100% { transform: translate(0,0); } }
+        @keyframes drift3 { 0% { transform: translate(0,0); } 50% { transform: translate(8px, -12px); } 100% { transform: translate(0,0); } }
+        
+        .drift-1 { animation: drift1 24s infinite ease-in-out; }
+        .drift-2 { animation: drift2 30s infinite ease-in-out; }
+        .drift-3 { animation: drift3 28s infinite ease-in-out; }
+        
+        /* Particle canvas styling */
+        #particle-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-high": "#292a2e",
+                        "outline-variant": "#464554",
+                        "surface": "#121317",
+                        "surface-bright": "#38393d",
+                        "on-tertiary-container": "#e9e6e6",
+                        "tertiary": "#c8c6c5",
+                        "surface-variant": "#343539",
+                        "on-background": "#e3e2e7",
+                        "primary": "#c2c1ff",
+                        "surface-container-low": "#1a1b1f",
+                        "primary-container": "#5856d6",
+                        "on-primary": "#1c0b9f",
+                        "secondary-container": "#4a4949",
+                        "on-surface": "#e3e2e7",
+                        "surface-container-lowest": "#0d0e12",
+                        "secondary": "#c9c6c5",
+                        "on-secondary-fixed": "#1c1b1b",
+                        "secondary-fixed": "#e5e2e1",
+                        "on-primary-fixed": "#0c006a",
+                        "on-secondary": "#313030",
+                        "inverse-on-surface": "#2f3034",
+                        "outline": "#918f9f",
+                        "on-tertiary-fixed-variant": "#474746",
+                        "on-surface-variant": "#c7c4d6",
+                        "surface-container-highest": "#343539",
+                        "primary-fixed-dim": "#c2c1ff",
+                        "tertiary-fixed-dim": "#c8c6c5",
+                        "surface-dim": "#121317",
+                        "on-secondary-container": "#bab8b7",
+                        "on-primary-container": "#e7e4ff",
+                        "tertiary-fixed": "#e5e2e1",
+                        "background": "#121317",
+                        "on-tertiary": "#313030",
+                        "primary-fixed": "#e2dfff",
+                        "inverse-primary": "#4f4ccd",
+                        "error-container": "#93000a",
+                        "on-primary-fixed-variant": "#3631b4",
+                        "error": "#ffb4ab",
+                        "surface-tint": "#c2c1ff",
+                        "on-secondary-fixed-variant": "#474646",
+                        "inverse-surface": "#e3e2e7",
+                        "on-error": "#690005",
+                        "tertiary-container": "#686767",
+                        "on-tertiary-fixed": "#1c1b1b",
+                        "surface-container": "#1e1f23",
+                        "secondary-fixed-dim": "#c9c6c5",
+                        "on-error-container": "#ffdad6"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "md": "16px",
+                        "xl": "40px",
+                        "margin": "16px",
+                        "lg": "24px",
+                        "sm": "8px",
+                        "base": "4px",
+                        "xs": "4px",
+                        "gutter": "12px"
+                    },
+                    "fontFamily": {
+                        "body-sm": ["Inter"],
+                        "code-md": ["JetBrains Mono"],
+                        "headline-md": ["Geist"],
+                        "headline-lg": ["Geist"],
+                        "label-caps": ["Inter"],
+                        "body-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "body-sm": ["12px", {"lineHeight": "16px", "letterSpacing": "0", "fontWeight": "400"}],
+                        "code-md": ["13px", {"lineHeight": "18px", "letterSpacing": "0", "fontWeight": "400"}],
+                        "headline-md": ["18px", {"lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                        "headline-lg": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                        "label-caps": ["10px", {"lineHeight": "12px", "letterSpacing": "0.05em", "fontWeight": "700"}],
+                        "body-md": ["14px", {"lineHeight": "20px", "letterSpacing": "-0.01em", "fontWeight": "400"}]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-surface-container-lowest text-on-surface font-body-md selection:bg-primary selection:text-on-primary-container h-screen overflow-hidden flex">
+<!-- Sidebar Navigation (SideNavBar) -->
+<aside class="hidden md:flex flex-col h-full w-60 left-0 bg-surface-container-lowest border-r border-outline-variant py-md space-y-base shrink-0 z-50">
+<div class="px-md mb-lg">
+<div class="flex items-center gap-sm">
+<div class="w-8 h-8 bg-primary rounded flex items-center justify-center text-on-primary">
+<span class="material-symbols-outlined text-[20px]" data-icon="memory">memory</span>
+</div>
+<div>
+<h1 class="font-headline-md text-headline-md font-black text-on-surface tracking-tight">Mnemosyne</h1>
+<p class="font-label-caps text-[9px] text-outline uppercase tracking-widest leading-none">AI Persistent State</p>
+</div>
+</div>
+</div>
+<nav class="flex-1 px-sm space-y-base">
+<a class="text-on-surface-variant flex items-center px-md py-sm hover:bg-surface-container-highest/50 text-on-surface transition-all hover:translate-x-1 duration-200 group" href="#">
+<span class="material-symbols-outlined mr-md text-[18px]" data-icon="terminal">terminal</span>
+<span class="font-label-caps text-label-caps">Threads</span>
+</a>
+<a class="bg-secondary-container/30 text-primary border-r-2 border-primary flex items-center px-md py-sm hover:bg-surface-container-highest/50 transition-all hover:translate-x-1 duration-200 group" href="#">
+<span class="material-symbols-outlined mr-md text-[18px]" data-icon="memory">memory</span>
+<span class="font-label-caps text-label-caps">Memory Banks</span>
+</a>
+<a class="text-on-surface-variant flex items-center px-md py-sm hover:bg-surface-container-highest/50 text-on-surface transition-all hover:translate-x-1 duration-200" href="#">
+<span class="material-symbols-outlined mr-md text-[18px]" data-icon="insights">insights</span>
+<span class="font-label-caps text-label-caps">Analytics</span>
+</a>
+<a class="text-on-surface-variant flex items-center px-md py-sm hover:bg-surface-container-highest/50 text-on-surface transition-all hover:translate-x-1 duration-200 group" href="#">
+<span class="material-symbols-outlined mr-md text-[18px]" data-icon="token">token</span>
+<span class="font-label-caps text-label-caps">Workspace</span>
+</a>
+</nav>
+<div class="px-md">
+<button class="w-full bg-primary-container text-on-primary-container py-sm px-md rounded-lg font-label-caps text-label-caps flex items-center justify-center gap-sm hover:opacity-90 transition-opacity">
+<span class="material-symbols-outlined text-[16px]" data-icon="add">add</span>
+                New Thread
+            </button>
+</div>
+<div class="mt-auto px-sm space-y-base border-t border-outline-variant pt-md">
+<a class="text-on-surface-variant flex items-center px-md py-sm hover:bg-surface-container-highest/50 text-on-surface transition-all hover:translate-x-1 duration-200" href="#">
+<span class="material-symbols-outlined mr-md text-[18px]" data-icon="description">description</span>
+<span class="font-label-caps text-label-caps">Docs</span>
+</a>
+<a class="text-on-surface-variant flex items-center px-md py-sm hover:bg-surface-container-highest/50 text-on-surface transition-all hover:translate-x-1 duration-200" href="#">
+<span class="material-symbols-outlined mr-md text-[18px]" data-icon="cloud_done">cloud_done</span>
+<span class="font-label-caps text-label-caps">Status</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="flex-1 relative obsidian-bg overflow-hidden flex flex-col">
+<!-- Top Navigation -->
+<header class="flex justify-between items-center w-full px-md h-12 bg-transparent z-50">
+<div class="flex items-center gap-md">
+<span class="font-headline-md text-headline-md font-bold text-on-surface tracking-tight drop-shadow-md">Graph View</span>
+<div class="h-4 w-[1px] bg-outline-variant/50"></div>
+<div class="flex items-center text-primary gap-xs drop-shadow-md">
+<span class="material-symbols-outlined text-[14px]" data-icon="check_circle" data-weight="fill" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span class="font-label-caps text-[10px]">Engine running</span>
+</div>
+</div>
+<div class="flex items-center gap-sm">
+<button class="p-2 text-on-surface-variant hover:text-on-surface transition-colors rounded-lg">
+<span class="material-symbols-outlined text-[20px]" data-icon="notifications">notifications</span>
+</button>
+<button class="p-2 text-on-surface-variant hover:text-on-surface transition-colors rounded-lg">
+<span class="material-symbols-outlined text-[20px]" data-icon="settings">settings</span>
+</button>
+<div class="w-8 h-8 rounded-full bg-surface-container overflow-hidden border border-outline-variant ml-xs">
+<img alt="User avatar" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB_PjaY_ZWaW0PNTyFKqYDsob3yWHx5-i_AD_4t7f-u7c5S23aAn5jOGGWKfG-mFdTkvoBO0kicO5fe-Phl_Psce2_vR0yn5Snck3YZe4kzpMN4oE8ivsNydJnC3i_AGG5BQ8rc9H4wBCQXVJulR76_0_2jcBFHM60pBe2NnrJJkC_SBy1vA-fQJpz1c_yTi4uhELqoIDWqcITa_jJwnrlXR0aFc8UahalJZDquK61aZgmMHEQVQYTqYEH7H3bCVsLRNikUH34UZDQ"/>
+</div>
+</div>
+</header>
+<!-- Graph Workspace -->
+<div class="flex-1 relative cursor-grab active:cursor-grabbing overflow-hidden graph-container" id="graph-container">
+<canvas id="particle-canvas"></canvas>
+<!-- SVG Connections Layer -->
+<svg class="absolute inset-0 w-full h-full pointer-events-none z-10" id="edges-layer">
+<path class="graph-edge" d="M400 300 L600 450" fill="none"></path>
+<path class="graph-edge" d="M400 300 L250 500" fill="none"></path>
+<path class="graph-edge" d="M600 450 L850 380" fill="none"></path>
+<path class="graph-edge" d="M600 450 L700 650" fill="none"></path>
+</svg>
+<!-- Graph Nodes -->
+<div class="absolute inset-0 z-20" id="nodes-layer">
+<!-- Large Node: Project Context (Alpha) -->
+<div class="absolute top-[280px] left-[380px] group flex flex-col items-center drift-1 transition-all duration-300">
+<div class="w-4 h-4 node-alpha flex items-center justify-center cursor-pointer graph-node-circle" onclick="toggleDrawer(true)">
+</div>
+<span class="mt-xs font-code-md text-[10px] drop-shadow-md graph-node-label">Global_Context_v4</span>
+</div>
+<!-- Mid Node: User Preference -->
+<div class="absolute top-[430px] left-[580px] group flex flex-col items-center drift-2 transition-all duration-300">
+<div class="w-3 h-3 node-pref flex items-center justify-center cursor-pointer graph-node-circle">
+</div>
+<span class="mt-xs font-code-md text-[9px] text-on-surface-variant drop-shadow-md graph-node-label">User_Tone_Prefs</span>
+</div>
+<!-- Small Node: Fact -->
+<div class="absolute top-[480px] left-[230px] group flex flex-col items-center drift-3 transition-all duration-300">
+<div class="w-2 h-2 node-fact flex items-center justify-center cursor-pointer graph-node-circle">
+</div>
+<span class="mt-xs font-code-md text-[9px] text-on-surface-variant drop-shadow-md graph-node-label">API_Key_Status</span>
+</div>
+<!-- Fact Node -->
+<div class="absolute top-[360px] left-[830px] group flex flex-col items-center drift-1 transition-all duration-300">
+<div class="w-2.5 h-2.5 node-fact flex items-center justify-center cursor-pointer graph-node-circle">
+</div>
+<span class="mt-xs font-code-md text-[9px] text-on-surface-variant drop-shadow-md graph-node-label">Auth_Flow_History</span>
+</div>
+<!-- Decision Node -->
+<div class="absolute top-[630px] left-[680px] group flex flex-col items-center drift-2 transition-all duration-300">
+<div class="w-3.5 h-3.5 node-decision flex items-center justify-center cursor-pointer graph-node-circle">
+</div>
+<span class="mt-xs font-code-md text-[9px] text-on-surface-variant drop-shadow-md graph-node-label opacity-90">Arch_Decision_Log</span>
+</div>
+</div>
+<!-- UI Overlay: Top-Left Controls -->
+<div class="absolute top-md left-md flex flex-col gap-sm z-30">
+<div class="flex gap-xs">
+<button class="h-8 px-md bg-surface-container-high/80 backdrop-blur border border-outline-variant text-on-surface font-label-caps text-label-caps rounded flex items-center gap-xs hover:bg-surface-container-highest transition-colors" onclick="toggleModal('add-memory-modal', true)">
+<span class="material-symbols-outlined text-[16px]" data-icon="add">add</span>
+                        Add Memory
+                    </button>
+<button class="h-8 px-sm bg-surface-container-high/80 backdrop-blur border border-outline-variant text-on-surface font-label-caps text-label-caps rounded flex items-center gap-xs hover:bg-surface-container-highest transition-colors">
+<span class="material-symbols-outlined text-[16px]" data-icon="refresh">refresh</span>
+</button>
+</div>
+<!-- Search/Filter Bar (Technical Density) -->
+<div class="flex items-center bg-surface-container-high/80 backdrop-blur border border-outline-variant rounded h-8 px-sm w-64">
+<span class="material-symbols-outlined text-outline text-[16px] mr-xs" data-icon="search">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-body-sm font-code-md w-full placeholder:text-outline-variant" placeholder="Search graph..." type="text"/>
+</div>
+</div>
+<!-- UI Overlay: Bottom-Left Legend -->
+<div class="absolute bottom-md left-md glass-panel p-sm rounded-lg min-w-[160px] z-30">
+<h4 class="font-label-caps text-[9px] text-outline uppercase tracking-widest mb-sm">Legend</h4>
+<div class="space-y-base">
+<div class="flex items-center gap-sm">
+<div class="w-3 h-3 rounded-full node-alpha"></div>
+<span class="text-body-sm font-headline-md text-[11px] text-on-surface-variant">Context Alpha</span>
+</div>
+<div class="flex items-center gap-sm">
+<div class="w-2.5 h-2.5 rounded-full node-pref"></div>
+<span class="text-body-sm font-headline-md text-[11px] text-on-surface-variant">User Profile</span>
+</div>
+<div class="flex items-center gap-sm">
+<div class="w-2.5 h-2.5 rounded-full node-decision"></div>
+<span class="text-body-sm font-headline-md text-[11px] text-on-surface-variant">Decisions</span>
+</div>
+<div class="flex items-center gap-sm">
+<div class="w-1.5 h-1.5 rounded-full node-fact"></div>
+<span class="text-body-sm font-headline-md text-[11px] text-on-surface-variant">Facts</span>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Node Detail Drawer (Right) -->
+<aside class="fixed top-0 right-0 h-full w-80 glass-panel border-l border-outline-variant z-[100] translate-x-full transition-transform duration-300 ease-in-out flex flex-col" id="node-detail-drawer">
+<div class="p-md border-b border-outline-variant flex justify-between items-center bg-transparent">
+<h2 class="font-label-caps text-label-caps uppercase tracking-widest text-on-surface">Node Details</h2>
+<button class="text-outline hover:text-on-surface" onclick="toggleDrawer(false)">
+<span class="material-symbols-outlined" data-icon="close">close</span>
+</button>
+</div>
+<div class="flex-1 overflow-y-auto p-md space-y-lg">
+<!-- Header Identity -->
+<div class="space-y-xs">
+<div class="flex items-center justify-between">
+<span class="font-code-md text-[11px] text-primary">ID: 0x98A...12</span>
+<span class="font-label-caps text-[10px] text-error border border-error/30 px-xs py-[2px] rounded uppercase">DECISION</span>
+</div>
+<h3 class="font-headline-md text-headline-md font-bold text-on-surface mt-sm">Global_Context_v4</h3>
+</div>
+<!-- Content Area -->
+<div class="bg-black/30 border border-outline-variant p-sm rounded-lg">
+<p class="font-body-sm text-on-surface-variant leading-relaxed">
+                    Persistent state established during session 812. Includes core operational parameters, system-wide constraints, and initialized agent personality traits.
+                </p>
+</div>
+<!-- Metadata Grid -->
+<div class="grid grid-cols-2 gap-sm">
+<div class="p-xs border border-outline-variant bg-black/20 rounded">
+<span class="block font-label-caps text-[9px] text-outline uppercase mb-[2px]">Importance</span>
+<div class="flex items-center gap-xs">
+<div class="flex-1 h-1 bg-surface-container-highest rounded">
+<div class="w-[90%] h-full bg-primary"></div>
+</div>
+<span class="font-code-md text-[11px]">0.92</span>
+</div>
+</div>
+<div class="p-xs border border-outline-variant bg-black/20 rounded">
+<span class="block font-label-caps text-[9px] text-outline uppercase mb-[2px]">Created</span>
+<span class="font-code-md text-[11px] text-on-surface">14m ago</span>
+</div>
+</div>
+<!-- Visualizer Card (Technical Density) -->
+<div class="rounded border border-outline-variant bg-black/40 overflow-hidden">
+<div class="bg-black/50 px-sm py-xs border-b border-outline-variant flex justify-between items-center">
+<span class="font-label-caps text-[10px]">Vector Space Distribution</span>
+<span class="material-symbols-outlined text-[12px]" data-icon="open_in_new">open_in_new</span>
+</div>
+<div class="h-32 w-full relative">
+<div class="absolute inset-0 flex items-center justify-center opacity-30 mix-blend-screen">
+<img class="w-full h-full object-cover" data-alt="A technical visualization of a vector embedding space, showing dense clusters of dots in a 3D coordinate system. The color palette is dark charcoal, deep blues, and electric purple highlights. The aesthetics are inspired by high-end engineering software like MATLAB or visual IDEs, conveying a sense of complex data processing." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB_PjaY_ZWaW0PNTyFKqYDsob3yWHx5-i_AD_4t7f-u7c5S23aAn5jOGGWKfG-mFdTkvoBO0kicO5fe-Phl_Psce2_vR0yn5Snck3YZe4kzpMN4oE8ivsNydJnC3i_AGG5BQ8rc9H4wBCQXVJulR76_0_2jcBFHM60pBe2NnrJJkC_SBy1vA-fQJpz1c_yTi4uhELqoIDWqcITa_jJwnrlXR0aFc8UahalJZDquK61aZgmMHEQVQYTqYEH7H3bCVsLRNikUH34UZDQ"/>
+</div>
+<!-- Crosshair overlay -->
+<div class="absolute top-1/2 left-1/2 w-4 h-4 -translate-x-1/2 -translate-y-1/2 border border-primary/30 flex items-center justify-center">
+<div class="w-[1px] h-full bg-primary/20"></div>
+<div class="h-[1px] w-full bg-primary/20 absolute"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Footer Actions -->
+<div class="p-md bg-black/40 border-t border-outline-variant grid grid-cols-2 gap-sm">
+<button class="flex items-center justify-center gap-xs h-9 bg-surface-container-highest border border-outline-variant text-on-surface font-label-caps text-label-caps rounded hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined text-[16px]" data-icon="edit">edit</span>
+                Edit
+            </button>
+<button class="flex items-center justify-center gap-xs h-9 bg-primary-container/20 text-primary border border-primary/40 font-label-caps text-label-caps rounded hover:bg-primary-container/40 transition-colors">
+<span class="material-symbols-outlined text-[16px]" data-icon="bolt" data-weight="fill" style="font-variation-settings: 'FILL' 1;">bolt</span>
+                Boost
+            </button>
+<button class="flex items-center justify-center gap-xs h-9 bg-surface-container-highest border border-outline-variant text-on-surface font-label-caps text-label-caps rounded hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined text-[16px]" data-icon="move_up">move_up</span>
+                Move
+            </button>
+<button class="flex items-center justify-center gap-xs h-9 bg-error-container/10 text-error border border-error/30 font-label-caps text-label-caps rounded hover:bg-error-container/20 transition-colors">
+<span class="material-symbols-outlined text-[16px]" data-icon="delete">delete</span>
+                Delete
+            </button>
+</div>
+</aside>
+<!-- Add Memory Popover (Modal) -->
+<div class="hidden fixed inset-0 z-[200] flex items-center justify-center p-md" id="add-memory-modal">
+<div class="absolute inset-0 bg-black/80 backdrop-blur-sm" onclick="toggleModal('add-memory-modal', false)"></div>
+<div class="relative w-full max-w-md glass-panel border border-outline-variant rounded-xl shadow-2xl overflow-hidden scale-95 transition-transform duration-300">
+<div class="px-md py-sm bg-black/40 border-b border-outline-variant flex justify-between items-center">
+<h3 class="font-label-caps text-label-caps uppercase tracking-widest text-on-surface">Injection Protocol</h3>
+<button class="text-outline hover:text-on-surface transition-colors" onclick="toggleModal('add-memory-modal', false)">
+<span class="material-symbols-outlined" data-icon="close">close</span>
+</button>
+</div>
+<div class="p-md space-y-md">
+<div class="space-y-xs">
+<label class="font-label-caps text-[10px] text-outline uppercase">Content</label>
+<textarea class="w-full bg-black/50 border border-outline-variant focus:border-primary focus:ring-0 rounded p-sm text-body-md font-body-sm text-on-surface placeholder:text-outline-variant" placeholder="Enter memory state or factual observation..." rows="4"></textarea>
+</div>
+<div class="grid grid-cols-2 gap-md">
+<div class="space-y-xs">
+<label class="font-label-caps text-[10px] text-outline uppercase">Type</label>
+<select class="w-full bg-black/50 border border-outline-variant focus:border-primary focus:ring-0 rounded p-sm text-body-sm h-10">
+<option>Fact</option>
+<option>Decision</option>
+<option>User Pref</option>
+<option>Observation</option>
+</select>
+</div>
+<div class="space-y-xs">
+<label class="font-label-caps text-[10px] text-outline uppercase">Weight</label>
+<div class="flex items-center gap-sm h-10 px-sm bg-black/50 border border-outline-variant rounded">
+<input class="flex-1 accent-primary" type="range"/>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-sm py-sm">
+<input class="w-4 h-4 rounded border-outline-variant bg-black/50 text-primary focus:ring-0 focus:ring-offset-0" id="broadcast" type="checkbox"/>
+<label class="text-body-sm text-on-surface-variant" for="broadcast">Broadcast to connected threads</label>
+</div>
+<div class="pt-sm border-t border-outline-variant flex justify-end gap-sm">
+<button class="px-md py-sm text-on-surface font-label-caps text-label-caps hover:bg-surface-container-highest rounded transition-colors" onclick="toggleModal('add-memory-modal', false)">Cancel</button>
+<button class="px-md py-sm bg-primary/20 border border-primary/50 text-primary font-label-caps text-label-caps rounded hover:bg-primary/30 active:scale-[0.98] transition-all">Confirm</button>
+</div>
+</div>
+</div>
+</div>
+<script>
+        function toggleDrawer(show) {
+            const drawer = document.getElementById('node-detail-drawer');
+            if (show) {
+                drawer.classList.remove('translate-x-full');
+            } else {
+                drawer.classList.add('translate-x-full');
+            }
+        }
+
+        function toggleModal(id, show) {
+            const modal = document.getElementById(id);
+            if (show) {
+                modal.classList.remove('hidden');
+                setTimeout(() => {
+                    modal.querySelector('.scale-95').classList.remove('scale-95');
+                }, 10);
+            } else {
+                modal.querySelector('div').classList.add('scale-95');
+                setTimeout(() => {
+                    modal.classList.add('hidden');
+                }, 200);
+            }
+        }
+
+        // Particle background logic for web-like effect
+        const canvas = document.getElementById('particle-canvas');
+        const ctx = canvas.getContext('2d');
+        const container = document.getElementById('graph-container');
+        
+        let width, height;
+        let particles = [];
+        let mouse = { x: null, y: null };
+
+        function resize() {
+            width = container.clientWidth;
+            height = container.clientHeight;
+            canvas.width = width;
+            canvas.height = height;
+        }
+        
+        window.addEventListener('resize', resize);
+        resize();
+
+        class Particle {
+            constructor() {
+                this.x = Math.random() * width;
+                this.y = Math.random() * height;
+                this.vx = (Math.random() - 0.5) * 0.2;
+                this.vy = (Math.random() - 0.5) * 0.2;
+                // Create size variations to simulate hubs
+                this.isHub = Math.random() > 0.95;
+                this.radius = this.isHub ? Math.random() * 2 + 2 : Math.random() * 1 + 0.5;
+            }
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                if (this.x < 0 || this.x > width) this.vx = -this.vx;
+                if (this.y < 0 || this.y > height) this.vy = -this.vy;
+            }
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = this.isHub ? 'rgba(255, 255, 255, 0.8)' : 'rgba(255, 255, 255, 0.4)';
+                ctx.fill();
+            }
+        }
+
+        // Increase particle density for the organic network effect
+        for(let i=0; i<180; i++) {
+            particles.push(new Particle());
+        }
+
+        container.addEventListener('mousemove', (e) => {
+            const rect = container.getBoundingClientRect();
+            mouse.x = e.clientX - rect.left;
+            mouse.y = e.clientY - rect.top;
+            
+            // Panning logic preserved from original
+            if(isDown) {
+                e.preventDefault();
+                const layer = document.getElementById('nodes-layer');
+                const svg = document.getElementById('edges-layer');
+                const moveX = (e.pageX - startX);
+                const moveY = (e.pageY - startY);
+                layer.style.transform = `translate(${moveX}px, ${moveY}px)`;
+                svg.style.transform = `translate(${moveX}px, ${moveY}px)`;
+            }
+        });
+        
+        container.addEventListener('mouseleave', () => {
+            mouse.x = null;
+            mouse.y = null;
+            isDown = false;
+            container.style.cursor = 'grab';
+        });
+
+        function animateParticles() {
+            ctx.clearRect(0, 0, width, height);
+            
+            for(let i=0; i<particles.length; i++) {
+                particles[i].update();
+                particles[i].draw();
+                
+                // Connect particles
+                for(let j=i; j<particles.length; j++) {
+                    const dx = particles[i].x - particles[j].x;
+                    const dy = particles[i].y - particles[j].y;
+                    const dist = Math.sqrt(dx*dx + dy*dy);
+                    
+                    // Increase connection distance and tune opacity for delicate lines
+                    if(dist < 120) {
+                        ctx.beginPath();
+                        ctx.moveTo(particles[i].x, particles[i].y);
+                        ctx.lineTo(particles[j].x, particles[j].y);
+                        ctx.strokeStyle = `rgba(255, 255, 255, ${0.1 - dist/1200})`;
+                        ctx.lineWidth = 0.5;
+                        ctx.stroke();
+                    }
+                }
+                
+                // Connect to mouse
+                if(mouse.x != null) {
+                    const dx = particles[i].x - mouse.x;
+                    const dy = particles[i].y - mouse.y;
+                    const dist = Math.sqrt(dx*dx + dy*dy);
+                    
+                    if(dist < 150) {
+                        ctx.beginPath();
+                        ctx.moveTo(particles[i].x, particles[i].y);
+                        ctx.lineTo(mouse.x, mouse.y);
+                        ctx.strokeStyle = `rgba(255, 255, 255, ${0.15 - dist/1000})`;
+                        ctx.lineWidth = 0.5;
+                        ctx.stroke();
+                    }
+                }
+            }
+            requestAnimationFrame(animateParticles);
+        }
+        animateParticles();
+
+        // Graph Panning Logic
+        let isDown = false;
+        let startX;
+        let startY;
+
+        container.addEventListener('mousedown', (e) => {
+            if (e.target.closest('.group')) return;
+            isDown = true;
+            startX = e.pageX;
+            startY = e.pageY;
+            container.style.cursor = 'grabbing';
+        });
+
+        container.addEventListener('mouseup', () => {
+            isDown = false;
+            container.style.cursor = 'grab';
+        });
+
+    </script>
+</body></html>
