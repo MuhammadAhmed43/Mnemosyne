@@ -23,19 +23,23 @@ export function SearchTab({ api, workspaceId }: { api: MnemosyneAPI; workspaceId
   }
 
   return (
-    <div className="p-3">
-      <input
-        value={query}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder="Search memories…"
-        className="w-full rounded-lg border border-border bg-bg-tertiary px-3 py-2 text-sm text-text-primary placeholder:text-text-tertiary"
-      />
-      <div className="mt-3 space-y-2">
+    <div className="p-md">
+      <div className="group relative">
+        <span className="material-symbols-outlined absolute left-sm top-1/2 -translate-y-1/2 text-[16px] text-outline-variant transition-colors group-focus-within:text-primary">search</span>
+        <input
+          value={query}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder="Search memories…"
+          aria-label="Search memories"
+          className="h-9 w-full border border-outline-variant bg-surface-container-low pl-xl pr-md font-body-sm text-body-sm text-on-surface outline-none transition-all placeholder:text-outline/50 focus:border-primary"
+        />
+      </div>
+      <div className="mt-gutter space-y-xs">
         {results.map((n) => (
           <MemoryNodeCard key={n.id} node={n} compact />
         ))}
         {query.length >= 2 && results.length === 0 && (
-          <p className="p-4 text-center text-sm text-text-secondary">No memories found for "{query}"</p>
+          <p className="p-md text-center font-body-sm text-body-sm text-on-surface-variant">No memories found for "{query}"</p>
         )}
       </div>
     </div>
